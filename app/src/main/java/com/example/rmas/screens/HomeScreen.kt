@@ -1,0 +1,160 @@
+package com.example.rmas.screens
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.rmas.data.LoginViewModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(context: Context,navController: NavController,loginViewModel: LoginViewModel = viewModel()){
+    val drawerState= rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope= rememberCoroutineScope()
+    var selectedIndex by rememberSaveable{ /*TODO* upitno da li radi*/
+        mutableStateOf(1)
+    }
+    ModalNavigationDrawer(
+        drawerContent = {
+            ModalDrawerSheet {
+                NavigationDrawerItem(
+                    label = { Text(text = "Mapa") },
+                    selected = selectedIndex==1,
+                    onClick = {
+                        selectedIndex=1
+                        navController.popBackStack("HomeScreen",false)
+                        scope.launch{
+                            drawerState.close()
+                        }
+                    },
+                    icon = {
+                        Icon(imageVector = Icons.Filled.Map,
+                            contentDescription = "Mapa",
+                            tint = Color.Black
+                        )
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text(text = "Rang lista") },
+                    selected = selectedIndex==2,
+                    onClick = {
+                        selectedIndex=2
+                        navController.navigate("RangScreen")
+                        scope.launch{
+                            drawerState.close()
+                        }
+                    },
+                    icon = {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.List,
+                            contentDescription = "Rang lista",
+                            tint = Color.Black
+                        )
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                HorizontalDivider(modifier = Modifier.padding(5.dp)) //mozda
+                NavigationDrawerItem(
+                    label = { Text(text = "Odjavi se") },
+                    selected = false,
+                    onClick = {
+                        loginViewModel.logOut(context, onClick = {navController.popBackStack("LoginScreen",false)})
+                    },
+                    icon = {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Logout",
+                            tint = Color.Black
+                        )
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        },
+            drawerState=drawerState
+    ) {
+        ModalDrawerSheet {
+
+        }
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(title = { Text(text = "Mapa", color=Color.Black) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.LightGray,
+                    ),/*TODO ruzna boja*/
+                    modifier= Modifier
+                        .fillMaxWidth(),
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                            drawerState.open()}
+                        }) {
+                            Icon(imageVector = Icons.Filled.Menu,
+                                contentDescription = "Menu",
+                                tint = Color.Black
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                drawerState.open()}
+                        }) {
+                            Icon(imageVector = Icons.Filled.FilterList,
+                                contentDescription = "Filter",
+                                tint = Color.Black
+                            )
+                        }
+                    }
+                )
+            },
+
+            ) { values ->
+            Surface(
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)/*TODO padding top manje*/
+                    .padding(values)
+            ) {
+                /*TODO*/
+            }
+
+        }
+
+    }
+}
+

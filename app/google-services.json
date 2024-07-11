@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "774814363628",
+    "project_id": "projekat-f3f09",
+    "storage_bucket": "projekat-f3f09.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774814363628:android:60ad63b7b95afac4e79ac9",
+        "android_client_info": {
+          "package_name": "com.company.projekat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCffReye6dWwNGUgzzUQu8L2338HXN1PTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774814363628:android:38b9298031aafebce79ac9",
+        "android_client_info": {
+          "package_name": "com.example.rmas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCffReye6dWwNGUgzzUQu8L2338HXN1PTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
