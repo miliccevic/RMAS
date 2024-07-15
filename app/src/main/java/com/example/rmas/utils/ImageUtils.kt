@@ -1,18 +1,23 @@
 package com.example.rmas.utils
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.ext.SdkExtensions
 import android.provider.MediaStore
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
 
 class ImageUtils(private val context: Context) {
     var currentPhotoPath: String? = null
-
     private fun createImageFile(): File {
         val timestamp = System.currentTimeMillis()
         val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -26,31 +31,35 @@ class ImageUtils(private val context: Context) {
         }
     }
 
-    private fun getImageCaptureIntent() = Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-        takePictureIntent.resolveActivity(context.packageManager)?.also {
-            val photoFile: File? = try {
-                createImageFile()
-            } catch (ex: Exception) {
-                null
-            }
+    private fun getImageCaptureIntent() =
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(context.packageManager)?.also {
+                val photoFile: File? = try {
+                    createImageFile()
+                } catch (ex: Exception) {
+                    null
+                }
+                photoFile?.also {
+                    val photoURI = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        it
+                    )
 
-            photoFile?.also {
-                val photoURI = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    it
-                )
-
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                }
             }
         }
-    }
 
-    private fun getGalleryIntent() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R) >= 2) {
-        Intent(MediaStore.ACTION_PICK_IMAGES)
-    } else {
-        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-    }
+    private fun getGalleryIntent() =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && SdkExtensions.getExtensionVersion(
+                Build.VERSION_CODES.R
+            ) >= 2
+        ) {
+            Intent(MediaStore.ACTION_PICK_IMAGES)
+        } else {
+            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        }
 
     fun getPathFromGalleryUri(uri: Uri): String? {
         val projection = arrayOf(MediaStore.Images.Media.DATA)
@@ -69,6 +78,7 @@ class ImageUtils(private val context: Context) {
     }
 
     fun getIntent(): Intent {
+
         val captureIntent = getImageCaptureIntent()
         val galleryIntent = getGalleryIntent()
 

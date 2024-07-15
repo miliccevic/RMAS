@@ -10,36 +10,38 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.rmas.screens.HomeScreen
+import com.example.rmas.screens.InputScreen
 import com.example.rmas.screens.LoginScreen
-import com.example.rmas.screens.RangScreen
+import com.example.rmas.screens.LeaderboardScreen
 import com.example.rmas.screens.SingUpScreen
-//<provider
-//android:authorities="com.task.master.fileprovider"
-//android:name="androidx.core.content.FileProvider"
-//android:exported="false"
-//android:grantUriPermissions="true">
-//<meta-data android:name="android.support.FILE_PROVIDER_PATH"
-//android:resource="@xml/file_path"/>
-//</provider>
+import com.google.firebase.auth.FirebaseUser
+
 
 @Composable
-fun App(context: Context, navController: NavHostController){
+fun App(user: FirebaseUser?,navController: NavHostController, requestPermission: () -> Unit) {
+    val startDestination:String
+    if(user==null)
+        startDestination="LoginScreen"
+    else startDestination="HomeScreen"
     Surface(
-        modifier=Modifier.fillMaxSize(),
-        color= Color.White
-    ){
-        NavHost(navController = navController, startDestination = "LoginScreen") {
+        modifier = Modifier.fillMaxSize(),
+        color = Color.White
+    ) {
+        NavHost(navController = navController, startDestination = startDestination) {
             composable("LoginScreen") {
-                LoginScreen(context,navController)
+                LoginScreen(navController)
             }
-            composable("SingUpScreen"){
-                SingUpScreen(context, navController)
+            composable("SingUpScreen") {
+                SingUpScreen(navController)
             }
-            composable("HomeScreen"){
-                HomeScreen(context,navController)
+            composable("HomeScreen") {
+                HomeScreen(startDestination,navController, requestPermission)
             }
-            composable("RangScreen"){
-                RangScreen()
+            composable("LeaderboardScreen") {
+                LeaderboardScreen()
+            }
+            composable("InputScreen") {
+                InputScreen(navController)
             }
         }
     }

@@ -52,7 +52,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -85,7 +84,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.3")
     implementation("com.github.CanHub:Android-Image-Cropper:4.0.0")
-    implementation("com.github.DJSeokHo:EasyPermissionManager:1.0.9")
     implementation ("androidx.compose.ui:ui:1.6.8")
     implementation("androidx.compose.ui:ui-tooling")
     implementation ("androidx.compose.ui:ui-graphics")
@@ -93,6 +91,10 @@ dependencies {
     implementation ("androidx.compose.material3:material3:1.2.1")
     implementation("com.google.accompanist:accompanist-permissions:0.24.13-rc")
     implementation("com.github.skydoves:landscapist-glide:1.3.7")
+    implementation ("com.google.maps.android:maps-compose:4.4.1")
+    implementation ("com.google.android.gms:play-services-maps:19.0.0")
+    implementation ("com.google.android.libraries.places:places:3.5.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
