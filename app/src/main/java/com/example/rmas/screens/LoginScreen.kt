@@ -52,6 +52,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val visible = remember { mutableStateOf(false) }
+
     Surface(
         color = Color.White,
         modifier = Modifier
@@ -78,7 +79,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     loginViewModel.onEvent(
                         LoginUIEvent.UsernameChanged(it),
                         context,
-                        onClick = { navController.navigate("HomeScreen") })
+                        navigateToHome = { navController.navigate("HomeScreen") })
                 },
                 isError = state.value.usernameError!=null
             )
@@ -101,7 +102,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     loginViewModel.onEvent(
                         LoginUIEvent.PasswordChanged(it),
                         context,
-                        onClick = { navController.navigate("HomeScreen") })
+                        navigateToHome = { navController.navigate("HomeScreen") })
                 },
                 isError = state.value.passwordError!=null,
                 trailingIcon = {
@@ -110,13 +111,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     } else {
                         Icons.Filled.VisibilityOff
                     }
-                    var description = if (visible.value) {
-                        "Sakrij šifru"
-                    } else {
-                        "Prikaži šifru"
-                    }
                     IconButton(onClick = { visible.value = !visible.value }) {
-                        Icon(imageVector = iconImage, contentDescription = description)
+                        Icon(imageVector = iconImage, contentDescription = null)
                     }
                 },
                 visualTransformation =
@@ -136,7 +132,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     loginViewModel.onEvent(
                         LoginUIEvent.LoginButtonClicked,
                         context,
-                        onClick = { navController.navigate("HomeScreen") })
+                        navigateToHome = { navController.navigate("HomeScreen") })
                 },
                 modifier = Modifier
                     .fillMaxWidth()

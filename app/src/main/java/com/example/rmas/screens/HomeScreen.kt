@@ -1,5 +1,9 @@
 package com.example.rmas.screens
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,8 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.rmas.services.location.LocationService
 import com.example.rmas.viewmodels.LoginViewModel
 import com.example.rmas.services.location.UserLocation
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -58,7 +64,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    startDestination:String,
+    startDestination: String,
     navController: NavController,
     requestPermission: () -> Unit,
     loginViewModel: LoginViewModel = viewModel()
@@ -69,8 +75,6 @@ fun HomeScreen(
     var selectedIndex by rememberSaveable { /*TODO* upitno da li radi*/
         mutableStateOf(1)
     }
-    //val fusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    //var currentLocation by remember { mutableStateOf<Location?>(null) }
     var userLocation by remember { mutableStateOf(UserLocation.location) }
     var deviceLatLng by remember {
         mutableStateOf(LatLng(43.32, 21.89))
@@ -131,13 +135,18 @@ fun HomeScreen(
                     label = { Text(text = "Odjavi se") },
                     selected = false,
                     onClick = {
+//                        viewModel.logout()
+//                        navController.navigate("LoginScreen"){
+//                            popUpTo("HomeScreen"){
+//                                inclusive=true
+//                            }
+//                        }
                         loginViewModel.logOut(
                             context,
-                            onClick = {
-                                if(startDestination=="HomeScreen") { /*TODO*/
+                            navigateToLogin = {
+                                if (startDestination == "HomeScreen") { /*TODO*/
                                     navController.navigate("LoginScreen")
-                                }
-                                else {
+                                } else {
                                     navController.popBackStack("LoginScreen", false)
                                 }
                             })
@@ -165,8 +174,9 @@ fun HomeScreen(
                         .fillMaxWidth(),
                     navigationIcon = {
                         IconButton(onClick = {
-                                scope.launch {
-                                drawerState.open() }
+                            scope.launch {
+                                drawerState.open()
+                            }
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.Menu,
@@ -177,8 +187,9 @@ fun HomeScreen(
                     },
                     actions = {
                         IconButton(onClick = {
-                                scope.launch {
-                                drawerState.open() }
+                            scope.launch {
+                                drawerState.open()
+                            }
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.FilterList,
@@ -193,7 +204,7 @@ fun HomeScreen(
                 FloatingActionButton(
                     modifier = Modifier
                         .padding(16.dp),
-                    onClick = { navController.navigate("InputScreen") },
+                    onClick = { navController.navigate("AddMarkerScreen") },
                 ) {
                     Icon(
                         Icons.Filled.AddLocation,

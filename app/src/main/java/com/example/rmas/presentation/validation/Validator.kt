@@ -22,7 +22,7 @@ object Validator {
     }
 
     fun validateEmail(email: String): ValidationResult {
-        if(email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches())
+        if(email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches())
             return ValidationResult(true)
         else
             return ValidationResult(false,"Nevalidna email adresa.")
@@ -61,6 +61,18 @@ object Validator {
           return ValidationResult(true)
         else
             return ValidationResult(false,"Potrebno je izabrati jednu sliku.")
+    }
+    fun validateTitle(title:String):ValidationResult{
+        if(title.isNotEmpty())
+            return ValidationResult(true)
+        else
+            return ValidationResult(false,"Naslov ne sme biti prazan.")
+    }
+    fun validateDescription(description:String):ValidationResult{
+        if(description.isNotEmpty())
+            return ValidationResult(true)
+        else
+            return ValidationResult(false,"Opis ne sme biti prazan.")
     }
 
     private fun isValidPassword(password: String): Boolean { //Password must contain minimum 8 characters at least 1 Uppercase, 1 Number and 1 Special Character

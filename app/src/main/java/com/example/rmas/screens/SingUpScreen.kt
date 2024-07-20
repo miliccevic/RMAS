@@ -44,7 +44,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -146,7 +145,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(values)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
             ) {
                 OutlinedTextField(
                     modifier = Modifier
@@ -161,7 +160,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.ImeChanged(it),
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     isError = state.value.imeError!=null
                 )
@@ -183,7 +182,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PrezimeChanged(it),
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     isError = state.value.prezimeError!=null
                 )
@@ -206,7 +205,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.TelefonChanged(it),
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     isError = state.value.telefonError!=null
                 )
@@ -228,7 +227,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.EmailChanged(it),
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     isError = state.value.emailError!=null
                 )
@@ -251,7 +250,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.UsernameChanged(it),
                             context,
-                            onClick = {
+                            navigateToLogin = {
                                 navController.popBackStack("LoginScreen", false)
                             })
                     },
@@ -276,7 +275,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PasswordChanged(it),
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     trailingIcon = {
                         val iconImage = if (visible.value) {
@@ -345,7 +344,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             singUpViewModel.onEvent(
                                 SingUpUIEvent.ImageChanged(uri),
                                 context,
-                                onClick = { navController.popBackStack("LoginScreen", false) })
+                                navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                             Image(
                                 bitmap = imageBitmap,
                                 contentDescription = "",
@@ -377,7 +376,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.RegisterButtonClicked,
                             context,
-                            onClick = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
                     modifier = Modifier
                         .fillMaxWidth()

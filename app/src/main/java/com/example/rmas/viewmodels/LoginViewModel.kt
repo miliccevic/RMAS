@@ -5,7 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.example.rmas.presentation.login.LoginUIEvent
+ import com.example.rmas.presentation.login.LoginUIEvent
 import com.example.rmas.presentation.login.LoginUIState
 import com.example.rmas.presentation.validation.Validator
 import com.google.firebase.Firebase
@@ -14,10 +14,9 @@ import com.google.firebase.firestore.firestore
 
 class LoginViewModel : ViewModel() {
     var loginUIState = mutableStateOf(LoginUIState())
-    var allValidationsPassed = mutableStateOf(false)
+    private var allValidationsPassed = mutableStateOf(false)
 
-    //samo jedan observer
-    fun onEvent(event: LoginUIEvent, context: Context, onClick: () -> Unit) {
+    fun onEvent(event: LoginUIEvent, context: Context, navigateToHome: () -> Unit) {
         when (event) {
             is LoginUIEvent.UsernameChanged -> {
                 loginUIState.value = loginUIState.value.copy(
@@ -32,71 +31,79 @@ class LoginViewModel : ViewModel() {
             }
 
             is LoginUIEvent.LoginButtonClicked -> {
-                login(context, onClick = { onClick() })
+                login(context, navigateToHome = { navigateToHome() })
             }
         }
     }
 
-    private fun login(context: Context, onClick: () -> Unit) {
+    private fun login(context: Context, navigateToHome: () -> Unit) {
         validateData()
         if (!allValidationsPassed.value)
             return
         val db = Firebase.firestore
-        db.collection("users")
-            .document(loginUIState.value.username)
-            .get()
-            .addOnSuccessListener {
-                if (it.exists()) {
-                    FirebaseAuth
-                        .getInstance()
-                        .signInWithEmailAndPassword(
-                            it.get("email").toString(),
-                            loginUIState.value.password
-                        )
-                        .addOnFailureListener {
-                            Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT)
-                                .show() /*TODO druga ikonica*/
-                        }
-                        .addOnCompleteListener {
-                            if (it.isSuccessful) {
-                                if (FirebaseAuth.getInstance().currentUser?.isEmailVerified == false) {
-                                    Toast.makeText(
-                                        context,
-                                        "Molimo vas potvrdite email adresu.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Uspešno logovanje.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onClick.invoke()
+        db.collection("users").whereEqualTo("username", loginUIState.value.username).get()
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    if(!it.result.isEmpty) {
+                        var email = it.result.documents[0].get("email").toString()
+                        FirebaseAuth
+                            .getInstance()
+                            .signInWithEmailAndPassword(
+                                email,
+                                loginUIState.value.password
+                            )
+                            .addOnFailureListener { e ->
+                                Log.d("TAG", e.localizedMessage)
+                                Toast.makeText(
+                                    context,
+                                    "Došlo je do greške prilikom prijavljivanja.",
+                                    Toast.LENGTH_SHORT
+                                )
+                                    .show()
+                            }
+                            .addOnCompleteListener { res ->
+                                if (res.isSuccessful) {
+                                    if (FirebaseAuth.getInstance().currentUser?.isEmailVerified == false) {
+                                        Toast.makeText(
+                                            context,
+                                            "Molimo vas potvrdite email adresu.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Uspešno prijavljivanje.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navigateToHome.invoke()
+                                    }
                                 }
                             }
-                        }
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Ne postoji nalog sa unetim korisničkim imenom.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    }
+                    else{
+                        Toast.makeText(context,"Ne postoji nalog sa unetim korisničkim imenom",Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .addOnFailureListener {
                 Log.d("TAG", it.localizedMessage)
-                Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Došlo je do greške prilikom prijavljivanja.",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
             }
     }
 
-    fun logOut(context: Context, onClick: () -> Unit) {
+    fun logOut(context: Context, navigateToLogin: () -> Unit) {
         val firebaseAuth = FirebaseAuth.getInstance()
         firebaseAuth.signOut()
 
         if (firebaseAuth.currentUser == null) {
             Toast.makeText(context, "Uspešno odjavljivanje.", Toast.LENGTH_SHORT).show()
         }
-        onClick.invoke()
+        navigateToLogin.invoke()
     }
 
     private fun validateData() {
@@ -108,6 +115,5 @@ class LoginViewModel : ViewModel() {
             usernameError = usernameResult.errorMessage,
             passwordError = passwordResult.errorMessage
         )
-
     }
 }
