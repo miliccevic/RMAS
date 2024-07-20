@@ -1,9 +1,5 @@
 package com.example.rmas.screens
 
-import android.Manifest
-import android.app.Activity
-import android.content.Intent
-import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +30,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,10 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.rmas.services.location.LocationService
 import com.example.rmas.viewmodels.LoginViewModel
 import com.example.rmas.services.location.UserLocation
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -73,7 +68,7 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var selectedIndex by rememberSaveable { /*TODO* upitno da li radi*/
-        mutableStateOf(1)
+        mutableIntStateOf(1)
     }
     var userLocation by remember { mutableStateOf(UserLocation.location) }
     var deviceLatLng by remember {
