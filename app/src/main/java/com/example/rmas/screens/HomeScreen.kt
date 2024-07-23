@@ -1,10 +1,16 @@
 package com.example.rmas.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -19,6 +25,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -37,16 +44,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.rmas.data.Location
+import com.example.rmas.database.Firebase
 import com.example.rmas.viewmodels.LoginViewModel
 import com.example.rmas.services.location.UserLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -55,7 +67,9 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
 
+@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -71,6 +85,30 @@ fun HomeScreen(
         mutableIntStateOf(1)
     }
     var userLocation by remember { mutableStateOf(UserLocation.location) }
+    var locations by mutableStateOf(emptyList<Location>())
+    Firebase.getLocations {
+        locations = it
+    }
+    var ime by remember {
+        mutableStateOf("")
+    }
+    var prezime by remember {
+        mutableStateOf("")
+    }
+    var email by remember {
+        mutableStateOf("")
+    }
+    var img by remember {
+        mutableStateOf("")
+    }
+    Firebase.getUser(FirebaseAuth.getInstance().currentUser!!.uid) {
+        if (it != null) {
+            ime = it.ime
+            prezime = it.prezime
+            email = it.email
+            img = it.image
+        }
+    }
     var deviceLatLng by remember {
         mutableStateOf(LatLng(43.32, 21.89))
     }
@@ -87,9 +125,32 @@ fun HomeScreen(
     ModalNavigationDrawer(
         drawerContent = {
             ModalDrawerSheet {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    AsyncImage( /*TODO mozda*/
+                        model = img,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(70.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "$ime $prezime",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = email, style = MaterialTheme.typography.bodySmall
+                    )
+                }
                 NavigationDrawerItem(
                     label = { Text(text = "Mapa") },
-                    selected = selectedIndex == 1,
+                    selected = selectedIndex == 1, /*TODO*/
                     onClick = {
                         selectedIndex = 1
                         navController.popBackStack("HomeScreen", false)
@@ -104,7 +165,8 @@ fun HomeScreen(
                             tint = Color.Black
                         )
                     },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    modifier = Modifier
+                        .padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
                     label = { Text(text = "Rang lista") },
@@ -130,12 +192,6 @@ fun HomeScreen(
                     label = { Text(text = "Odjavi se") },
                     selected = false,
                     onClick = {
-//                        viewModel.logout()
-//                        navController.navigate("LoginScreen"){
-//                            popUpTo("HomeScreen"){
-//                                inclusive=true
-//                            }
-//                        }
                         loginViewModel.logOut(
                             context,
                             navigateToLogin = {
@@ -242,6 +298,17 @@ fun HomeScreen(
                                     )
                                 )
                             )
+                        }
+                        locations.let {
+                            for (marker in it)
+                                Marker(
+                                    state = MarkerState(
+                                        position = LatLng(
+                                            marker.location.latitude,
+                                            marker.location.longitude
+                                        )
+                                    )
+                                )
                         }
                     }
                 }

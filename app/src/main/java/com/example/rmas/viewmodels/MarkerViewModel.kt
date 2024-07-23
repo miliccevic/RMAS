@@ -16,7 +16,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObject
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 class MarkerViewModel : ViewModel() {
@@ -59,7 +61,11 @@ class MarkerViewModel : ViewModel() {
         if (!allValidationsPassed.value)
             return
         if (UserLocation.location.value == null) {
-            Toast.makeText(context,"Potrebno je da uključite praćenje lokacije da biste mogli da dodate lokaciju na mapi.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                "Potrebno je da uključite praćenje lokacije da biste mogli da dodate lokaciju na mapi.",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
         val userId = FirebaseAuth.getInstance().currentUser!!.uid

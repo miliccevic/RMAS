@@ -26,17 +26,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,215 +108,244 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
     var expanded = remember { mutableStateOf(false) }
     var selectedOption = remember { mutableStateOf(options[0]) }
     markerViewModel.onEvent(MarkerUIEvent.TypeChanged(selectedOption.value), context, onClick = {})
-
-    Surface(
-        color = Color.White,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(28.dp)
-    ) {
-        Column(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Dodaj na mapu", color = Color.Black) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.LightGray,
+                ),
+                /*TODO ruzna boja*/
+                modifier = Modifier
+                    .fillMaxWidth(),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack("HomeScreen", false) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
+                    }
+                },
+            )
+        }
+    ) { values ->
+        Surface(
+            color = Color.White,
             modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(28.dp)
         ) {
-            OutlinedTextField(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(4.dp)),
-                value = title.value,
-                onValueChange = {
-                    title.value = it
-                    markerViewModel.onEvent(MarkerUIEvent.TitleChanged(it), context, onClick = {})
-                },
-                label = { Text(text = "Naslov") },
-                keyboardOptions = KeyboardOptions.Default,
-                colors = OutlinedTextFieldDefaults.colors(
-                    /*TODO*/
-                ),
-                isError = state.value.titleError != null
-            )
-            if (state.value.titleError != null) {
-                Text(
-                    text = state.value.titleError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(4.dp)),
-                value = description.value,
-                onValueChange = {
-                    description.value = it
-                    markerViewModel.onEvent(
-                        MarkerUIEvent.DescriptionChanged(it),
-                        context,
-                        onClick = {})
-                },
-                label = { Text(text = "Opis") },
-                keyboardOptions = KeyboardOptions.Default,
-                colors = OutlinedTextFieldDefaults.colors(
-                    /*TODO*/
-                ),
-                isError = state.value.descriptionError != null
-            )
-            if (state.value.descriptionError != null) {
-                Text(
-                    text = state.value.descriptionError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
-            ExposedDropdownMenuBox(
-                expanded = expanded.value,
-                onExpandedChange = {
-                    expanded.value = !expanded.value
-                }
+                    .fillMaxSize()
+                    .padding(values),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
-                        .menuAnchor(),
-                    value = selectedOption.value,
+                        .clip(RoundedCornerShape(4.dp)),
+                    value = title.value,
                     onValueChange = {
-
-                    },
-                    label = { Text(text = "Kategorija") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-
-                    ),
-                    readOnly = true
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest = { expanded.value = false } /*TODO cela duzina*/
-                ) {
-                    options.forEach {
-                        DropdownMenuItem(
-                            text = { Text(text = it) },
-                            onClick = {
-                                selectedOption.value = it
-                                expanded.value = false
-                                markerViewModel.onEvent(
-                                    MarkerUIEvent.TypeChanged(it),
-                                    context,
-                                    onClick = {})
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .height(100.dp)
-            ) {/*TODO*/
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 10.dp)
-                ) {
-                    if (currentPhoto == null) {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_photo_camera_24),
-                            contentDescription = "",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .size(100.dp)
-                                .background(Color.Gray)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color.Black,
-                                    shape = CircleShape
-                                )
-                                .clickable {
-                                    if (ContextCompat.checkSelfPermission(
-                                            context,
-                                            Manifest.permission.CAMERA
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                    } else {
-                                        launcher.launch(imageUtils.getIntent())
-                                    }
-                                }
-                        )
-                    } else {
-                        val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
-                        bitmap = imageBitmap
-                        val uri = Uri.fromFile(File(currentPhoto))
-                        imgUrl.value = uri
+                        title.value = it
                         markerViewModel.onEvent(
-                            MarkerUIEvent.ImageChanged(uri),
+                            MarkerUIEvent.TitleChanged(it),
                             context,
                             onClick = {})
-                        Image(
-                            bitmap = imageBitmap,
-                            contentDescription = "",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .size(100.dp)
-                                .background(Color.Gray)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color.Black,
-                                    shape = CircleShape
-                                )
-                                .clickable {
-                                    launcher.launch(imageUtils.getIntent())
-                                }
-                        )
-                    }
+                    },
+                    label = { Text(text = "Naslov") },
+                    keyboardOptions = KeyboardOptions.Default,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        /*TODO*/
+                    ),
+                    isError = state.value.titleError != null
+                )
+                if (state.value.titleError != null) {
+                    Text(
+                        text = state.value.titleError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
-            }
-            if (state.value.imageError != null) { /*TODO*/
-                Text(
-                    text = state.value.imageError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
-            Button(
-                onClick = {
-                    markerViewModel.onEvent(MarkerUIEvent.AddMarkerClicked, context, onClick = {navController.popBackStack("HomeScreen",false)})
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(48.dp),
-                contentPadding = PaddingValues(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                )
-            ) {
-                Box(
+                OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(48.dp)
-                        .background(
-                            shape = RoundedCornerShape(50.dp),
-                            color = Color.Black
-                        ),
-                    contentAlignment = Alignment.Center
+                        .clip(RoundedCornerShape(4.dp)),
+                    value = description.value,
+                    onValueChange = {
+                        description.value = it
+                        markerViewModel.onEvent(
+                            MarkerUIEvent.DescriptionChanged(it),
+                            context,
+                            onClick = {})
+                    },
+                    label = { Text(text = "Opis") },
+                    keyboardOptions = KeyboardOptions.Default,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        /*TODO*/
+                    ),
+                    isError = state.value.descriptionError != null
                 )
-                {
+                if (state.value.descriptionError != null) {
                     Text(
-                        text = "Dodaj na mapu",
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        text = state.value.descriptionError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.End)
                     )
+                }
+                ExposedDropdownMenuBox(
+                    expanded = expanded.value,
+                    onExpandedChange = {
+                        expanded.value = !expanded.value
+                    }
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp))
+                            .menuAnchor(),
+                        value = selectedOption.value,
+                        onValueChange = {
+
+                        },
+                        label = { Text(text = "Kategorija") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+
+                        ),
+                        readOnly = true
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded.value,
+                        onDismissRequest = { expanded.value = false } /*TODO cela duzina*/
+                    ) {
+                        options.forEach {
+                            DropdownMenuItem(
+                                text = { Text(text = it) },
+                                onClick = {
+                                    selectedOption.value = it
+                                    expanded.value = false
+                                    markerViewModel.onEvent(
+                                        MarkerUIEvent.TypeChanged(it),
+                                        context,
+                                        onClick = {})
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .height(100.dp)
+                ) {/*TODO*/
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 10.dp)
+                    ) {
+                        if (currentPhoto == null) {
+                            Image(
+                                painter = painterResource(id = R.drawable.baseline_photo_camera_24),
+                                contentDescription = "",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .size(100.dp)
+                                    .background(Color.Gray)
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.Black,
+                                        shape = CircleShape
+                                    )
+                                    .clickable {
+                                        if (ContextCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.CAMERA
+                                            ) != PackageManager.PERMISSION_GRANTED
+                                        ) {
+                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        } else {
+                                            launcher.launch(imageUtils.getIntent())
+                                        }
+                                    }
+                            )
+                        } else {
+                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
+                            bitmap = imageBitmap
+                            val uri = Uri.fromFile(File(currentPhoto))
+                            imgUrl.value = uri
+                            markerViewModel.onEvent(
+                                MarkerUIEvent.ImageChanged(uri),
+                                context,
+                                onClick = {})
+                            Image(
+                                bitmap = imageBitmap,
+                                contentDescription = "",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .size(100.dp)
+                                    .background(Color.Gray)
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.Black,
+                                        shape = CircleShape
+                                    )
+                                    .clickable {
+                                        launcher.launch(imageUtils.getIntent())
+                                    }
+                            )
+                        }
+                    }
+                }
+                if (state.value.imageError != null) { /*TODO*/
+                    Text(
+                        text = state.value.imageError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
+                Button(
+                    onClick = {
+                        markerViewModel.onEvent(
+                            MarkerUIEvent.AddMarkerClicked,
+                            context,
+                            onClick = { navController.popBackStack("HomeScreen", false) })
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(48.dp),
+                    contentPadding = PaddingValues(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(48.dp)
+                            .background(
+                                shape = RoundedCornerShape(50.dp),
+                                color = Color.Black
+                            ),
+                        contentAlignment = Alignment.Center
+                    )
+                    {
+                        Text(
+                            text = "Dodaj na mapu",
+                            fontSize = 18.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

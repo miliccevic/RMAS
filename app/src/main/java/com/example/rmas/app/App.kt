@@ -18,7 +18,7 @@ import com.google.firebase.auth.FirebaseUser
 
 @Composable
 fun App(user: FirebaseUser?, navController: NavHostController, requestPermission: () -> Unit) {
-    val startDestination: String = if (user == null)
+    val startDestination: String = if (user == null) 
         "LoginScreen"
     else "HomeScreen"
     Surface(
