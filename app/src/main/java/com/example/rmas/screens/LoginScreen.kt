@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -27,8 +29,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,11 +51,10 @@ import com.example.rmas.viewmodels.LoginViewModel
 
 @Composable
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = viewModel()) {
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val state=loginViewModel.loginUIState
-    val username = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-    val visible = remember { mutableStateOf(false) }
+    val state=loginViewModel.loginUIState.collectAsState()
+    val visible = rememberSaveable { mutableStateOf(false) }
 
     Surface(
         color = Color.White,
@@ -62,7 +65,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -73,9 +77,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 label = { Text(text = "Korisničko ime") },
                 colors=OutlinedTextFieldDefaults.colors(),
                 keyboardOptions = KeyboardOptions.Default,
-                value = username.value,
+                value = state.value.username,
                 onValueChange = {
-                    username.value = it
                     loginViewModel.onEvent(
                         LoginUIEvent.UsernameChanged(it),
                         context,
@@ -96,9 +99,8 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 label = { Text(text = "Šifra") },
                 colors=OutlinedTextFieldDefaults.colors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                value = password.value,
+                value = state.value.password,
                 onValueChange = {
-                    password.value = it
                     loginViewModel.onEvent(
                         LoginUIEvent.PasswordChanged(it),
                         context,

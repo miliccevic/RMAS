@@ -4,8 +4,10 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.rmas.data.Location
+import com.example.rmas.presentation.filter.FilterUIState
 import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.presentation.marker.MarkerUIState
 import com.example.rmas.presentation.validation.Validator
@@ -18,34 +20,39 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
-class MarkerViewModel : ViewModel() {
-    var markerUIState = mutableStateOf(MarkerUIState())
+class MarkerViewModel() : ViewModel() {
+
+    private val _markerUIState = MutableStateFlow(MarkerUIState())
+    val markerUIState = _markerUIState.asStateFlow()
+
     private var allValidationsPassed = mutableStateOf(false)
     fun onEvent(event: MarkerUIEvent, context: Context, onClick: () -> Unit) {
         when (event) {
             is MarkerUIEvent.TitleChanged -> {
-                markerUIState.value = markerUIState.value.copy(
+                _markerUIState.value = _markerUIState.value.copy(
                     title = event.title
                 )
             }
 
             is MarkerUIEvent.DescriptionChanged -> {
-                markerUIState.value = markerUIState.value.copy(
+                _markerUIState.value = _markerUIState.value.copy(
                     description = event.description
                 )
             }
 
             is MarkerUIEvent.TypeChanged -> {
-                markerUIState.value = markerUIState.value.copy(
+                _markerUIState.value = _markerUIState.value.copy(
                     type = event.type
                 )
             }
 
             is MarkerUIEvent.ImageChanged -> {
-                markerUIState.value = markerUIState.value.copy(
+                _markerUIState.value = _markerUIState.value.copy(
                     image = event.image
                 )
             }
@@ -73,7 +80,7 @@ class MarkerViewModel : ViewModel() {
         val storage = FirebaseStorage.getInstance().reference.child("slike_lokacija")
             .child(System.currentTimeMillis().toString())
         var url: String
-        storage.putFile(markerUIState.value.image)
+        storage.putFile(_markerUIState.value.image)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     storage.downloadUrl
@@ -82,11 +89,11 @@ class MarkerViewModel : ViewModel() {
                                 url = it1.result.toString()
                                 val location = Location(
                                     userId = userId,
-                                    description = markerUIState.value.description,
-                                    title = markerUIState.value.title,
+                                    description = _markerUIState.value.description,
+                                    title = _markerUIState.value.title,
                                     image = url,
                                     date = Timestamp(Date()),
-                                    type = markerUIState.value.type,
+                                    type = _markerUIState.value.type,
                                     location = GeoPoint(
                                         UserLocation.location.value!!.latitude,
                                         UserLocation.location.value!!.longitude
@@ -149,14 +156,14 @@ class MarkerViewModel : ViewModel() {
     }
 
     private fun validateData() {
-        val titleResult = Validator.validateTitle(title = markerUIState.value.title)
+        val titleResult = Validator.validateTitle(title = _markerUIState.value.title)
         val descriptionResult =
-            Validator.validateDescription(description = markerUIState.value.description)
-        val imageResult = Validator.validateImage(image = markerUIState.value.image)
+            Validator.validateDescription(description = _markerUIState.value.description)
+        val imageResult = Validator.validateImage(image = _markerUIState.value.image)
 
         allValidationsPassed.value =
             (titleResult.status && descriptionResult.status && imageResult.status)
-        markerUIState.value = markerUIState.value.copy(
+        _markerUIState.value = _markerUIState.value.copy(
             titleError = titleResult.errorMessage,
             descriptionError = descriptionResult.errorMessage,
             imageError = imageResult.errorMessage

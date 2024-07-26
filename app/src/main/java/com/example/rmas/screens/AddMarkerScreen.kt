@@ -23,9 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -45,9 +47,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.R
 import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.utils.ImageUtils
@@ -75,15 +80,14 @@ import java.io.File
 @Composable
 fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewModel = viewModel()) {
     val context = LocalContext.current
-    val state = markerViewModel.markerUIState
-    val description = remember { mutableStateOf("") }
-    val title = remember { mutableStateOf("") }
-    val imgUrl = remember { mutableStateOf(Uri.EMPTY) } /*TODO crop*/
+    val scrollState = rememberScrollState()
+    val state = markerViewModel.markerUIState.collectAsState()
+//    val imgUrl = remember { mutableStateOf(Uri.EMPTY) }
 
     val imageUtils = ImageUtils(context)
 
-    var currentPhoto by remember { mutableStateOf<String?>(null) }
-    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var currentPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+//    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -105,9 +109,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
     }
     val options =
         listOf("Rupa na putu", "Rad na putu", "Saobraćajna nezgoda", "Zatvorena ulica", "Ostalo")
-    var expanded = remember { mutableStateOf(false) }
-    var selectedOption = remember { mutableStateOf(options[0]) }
-    markerViewModel.onEvent(MarkerUIEvent.TypeChanged(selectedOption.value), context, onClick = {})
+    var expanded = rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -136,6 +138,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                 .fillMaxSize()
                 .background(Color.White)
                 .padding(28.dp)
+                .verticalScroll(scrollState)
         ) {
             Column(
                 modifier = Modifier
@@ -148,9 +151,8 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
-                    value = title.value,
+                    value = state.value.title,
                     onValueChange = {
-                        title.value = it
                         markerViewModel.onEvent(
                             MarkerUIEvent.TitleChanged(it),
                             context,
@@ -174,9 +176,8 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
-                    value = description.value,
+                    value = state.value.description,
                     onValueChange = {
-                        description.value = it
                         markerViewModel.onEvent(
                             MarkerUIEvent.DescriptionChanged(it),
                             context,
@@ -207,7 +208,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(4.dp))
                             .menuAnchor(),
-                        value = selectedOption.value,
+                        value = state.value.type,
                         onValueChange = {
 
                         },
@@ -228,7 +229,6 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             DropdownMenuItem(
                                 text = { Text(text = it) },
                                 onClick = {
-                                    selectedOption.value = it
                                     expanded.value = false
                                     markerViewModel.onEvent(
                                         MarkerUIEvent.TypeChanged(it),
@@ -278,16 +278,16 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                                     }
                             )
                         } else {
-                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
-                            bitmap = imageBitmap
+//                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
+//                            bitmap = imageBitmap
                             val uri = Uri.fromFile(File(currentPhoto))
-                            imgUrl.value = uri
+//                            imgUrl.value = uri
                             markerViewModel.onEvent(
                                 MarkerUIEvent.ImageChanged(uri),
                                 context,
                                 onClick = {})
                             Image(
-                                bitmap = imageBitmap,
+                                painter = rememberAsyncImagePainter(model = state.value.image),
                                 contentDescription = "",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
@@ -303,6 +303,23 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                                         launcher.launch(imageUtils.getIntent())
                                     }
                             )
+//                            Image(
+//                                bitmap = imageBitmap,
+//                                contentDescription = "",
+//                                contentScale = ContentScale.Crop,
+//                                modifier = Modifier
+//                                    .clip(CircleShape)
+//                                    .size(100.dp)
+//                                    .background(Color.Gray)
+//                                    .border(
+//                                        width = 1.dp,
+//                                        color = Color.Black,
+//                                        shape = CircleShape
+//                                    )
+//                                    .clickable {
+//                                        launcher.launch(imageUtils.getIntent())
+//                                    }
+//                            )
                         }
                     }
                 }

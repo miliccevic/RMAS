@@ -32,14 +32,12 @@ class DefaultLocationClient(
                 throw LocationClient.LocationException("GPS is disabled")
             }
 
-            //zahtev koji se salje
             val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,interval)
                 .setWaitForAccurateLocation(false)
                 .setMinUpdateIntervalMillis(1000)
                 .setMaxUpdateDelayMillis(interval)
                 .build()
 
-            //svaki put kad stigne nova lokacije se zove
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
                     super.onLocationResult(result)

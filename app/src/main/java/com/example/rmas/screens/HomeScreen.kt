@@ -1,21 +1,29 @@
 package com.example.rmas.screens
 
-import android.annotation.SuppressLint
+import  android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AddLocation
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,6 +34,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -33,21 +42,28 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -67,28 +83,38 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import com.example.rmas.components.DateRangePicker
+import com.example.rmas.components.DistanceSlider
+import com.example.rmas.components.FilterChips
+import com.example.rmas.viewmodels.FilterViewModel
 
-@SuppressLint("UnrememberedMutableState")
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     startDestination: String,
     navController: NavController,
     requestPermission: () -> Unit,
-    loginViewModel: LoginViewModel = viewModel()
+    loginViewModel: LoginViewModel = viewModel(),
+    filterViewModel: FilterViewModel = viewModel()
 ) {
+    val filterScrollState = rememberScrollState()
+    val sheetState = rememberModalBottomSheetState()
+    var isSheetOpen by rememberSaveable { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var selectedIndex by rememberSaveable { /*TODO* upitno da li radi*/
+    var selectedIndex by rememberSaveable {
         mutableIntStateOf(1)
     }
+
     var userLocation by remember { mutableStateOf(UserLocation.location) }
-    var locations by mutableStateOf(emptyList<Location>())
+    var locations by remember { mutableStateOf(emptyList<Location>()) }
     Firebase.getLocations {
         locations = it
     }
+
     var ime by remember {
         mutableStateOf("")
     }
@@ -109,6 +135,7 @@ fun HomeScreen(
             img = it.image
         }
     }
+
     var deviceLatLng by remember {
         mutableStateOf(LatLng(43.32, 21.89))
     }
@@ -121,8 +148,17 @@ fun HomeScreen(
     var properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.TERRAIN))
     }
+
+    val selectedType = remember { mutableStateListOf("") }
+    val datum = remember { mutableStateOf("Izaberite opseg") }
+    val isPickerVisible = remember { mutableStateOf(false) }
+    val dateRangePickerState = rememberDateRangePickerState()
+    val sliderPosition = remember { mutableFloatStateOf(0f) }
+
     requestPermission() /*TODO*/
+
     ModalNavigationDrawer(
+        gesturesEnabled = false,
         drawerContent = {
             ModalDrawerSheet {
                 Column(
@@ -130,19 +166,18 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    AsyncImage( /*TODO mozda*/
-                        model = img,
+                    Image(
+                        painter = rememberAsyncImagePainter(model = img),
+                        contentDescription = null,
                         modifier = Modifier
                             .padding(4.dp)
                             .size(70.dp)
                             .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null
+                        contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "$ime $prezime",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "$ime $prezime", style = MaterialTheme.typography.titleMedium
                     )
                     Text(
                         text = email, style = MaterialTheme.typography.bodySmall
@@ -161,12 +196,11 @@ fun HomeScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Map,
-                            contentDescription = "Mapa",
+                            contentDescription = null,
                             tint = Color.Black
                         )
                     },
-                    modifier = Modifier
-                        .padding(NavigationDrawerItemDefaults.ItemPadding)
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
                     label = { Text(text = "Rang lista") },
@@ -181,26 +215,43 @@ fun HomeScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = "Rang lista",
+                            contentDescription = null,
                             tint = Color.Black
                         )
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
-                HorizontalDivider(modifier = Modifier.padding(5.dp)) //mozda
+                NavigationDrawerItem(
+                    label = { Text(text = "Lista lokacija") },
+                    selected = selectedIndex == 3,
+                    onClick = {
+                        selectedIndex = 3
+                        navController.navigate("LocationScreen")
+                        scope.launch {
+                            drawerState.close()
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.LocationOn,
+                            contentDescription = null,
+                            tint = Color.Black
+                        )
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                HorizontalDivider(modifier = Modifier.padding(5.dp))
                 NavigationDrawerItem(
                     label = { Text(text = "Odjavi se") },
                     selected = false,
                     onClick = {
-                        loginViewModel.logOut(
-                            context,
-                            navigateToLogin = {
-                                if (startDestination == "HomeScreen") { /*TODO*/
-                                    navController.navigate("LoginScreen")
-                                } else {
-                                    navController.popBackStack("LoginScreen", false)
-                                }
-                            })
+                        loginViewModel.logOut(context, navigateToLogin = {
+                            if (startDestination == "HomeScreen") { /*TODO*/
+                                navController.navigate("LoginScreen")
+                            } else {
+                                navController.popBackStack("LoginScreen", false)
+                            }
+                        })
                     },
                     icon = {
                         Icon(
@@ -212,58 +263,48 @@ fun HomeScreen(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }
-        },
-        drawerState = drawerState
+        }, drawerState = drawerState
     ) {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(title = { Text(text = "Mapa", color = Color.Black) },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.LightGray,
-                    ),/*TODO ruzna boja*/
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                drawerState.open()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Menu",
-                                tint = Color.Black
-                            )
+        Scaffold(topBar = {
+            CenterAlignedTopAppBar(title = { Text(text = "Mapa", color = Color.Black) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.LightGray,
+                ),/*TODO ruzna boja*/
+                modifier = Modifier.fillMaxWidth(),
+                navigationIcon = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            drawerState.open()
                         }
-                    },
-                    actions = {
-                        IconButton(onClick = {
-                            scope.launch {
-                                drawerState.open()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.FilterList,
-                                contentDescription = "Filter",
-                                tint = Color.Black
-                            )
-                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Menu",
+                            tint = Color.Black
+                        )
                     }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        isSheetOpen = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.FilterList,
+                            contentDescription = "Filter",
+                            tint = Color.Black
+                        )
+                    }
+                })
+        }, floatingActionButton = {
+            FloatingActionButton(
+                modifier = Modifier.padding(16.dp),
+                onClick = { navController.navigate("AddMarkerScreen") },
+            ) {
+                Icon(
+                    Icons.Filled.AddLocation, contentDescription = ""
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    modifier = Modifier
-                        .padding(16.dp),
-                    onClick = { navController.navigate("AddMarkerScreen") },
-                ) {
-                    Icon(
-                        Icons.Filled.AddLocation,
-                        contentDescription = ""
-                    )
-                }
             }
-        ) { values ->
+        }) { values ->
             Surface(
                 color = Color.White,
                 modifier = Modifier
@@ -273,14 +314,11 @@ fun HomeScreen(
             ) {
                 /*TODO*/
                 Box(modifier = Modifier) {
-                    GoogleMap(
-                        modifier = Modifier.fillMaxSize(),
+                    GoogleMap(modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
                         properties = properties,
                         uiSettings = uiSettings,
-                        onMapClick = {
-                        }
-                    ) {
+                        onMapClick = {}) {
                         if (userLocation.value != null) {
                             cameraPositionState.move(
                                 CameraUpdateFactory.newLatLng(
@@ -304,11 +342,58 @@ fun HomeScreen(
                                 Marker(
                                     state = MarkerState(
                                         position = LatLng(
-                                            marker.location.latitude,
-                                            marker.location.longitude
+                                            marker.location.latitude, marker.location.longitude
                                         )
                                     )
                                 )
+                        }
+                    }
+                }
+                if (isSheetOpen) {
+                    ModalBottomSheet(
+                        onDismissRequest = {
+                            isSheetOpen = false
+                        },
+                        sheetState = sheetState,
+                    ) {
+                        Column(modifier = Modifier) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(onClick = { isSheetOpen = false }) {
+                                    Icon(Icons.Default.Close, contentDescription = null)
+                                }
+                                Text(
+                                    "Filteri",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                ) /*TODO*/
+                                TextButton(onClick = {}) {
+                                    Text("Resetuj")
+                                }
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                                    .verticalScroll(filterScrollState)
+                            ) {
+                                Text(text = "Rastojanje")
+                                DistanceSlider(sliderPosition,0f..999f, filterViewModel)
+                                HorizontalDivider(thickness = 1.dp)
+                                Text("Tip")
+                                FilterChips(selectedType, filterViewModel)
+                                HorizontalDivider(thickness = 1.dp)
+                                Text(text = "Datum")
+                                DateRangePicker(
+                                    datum,
+                                    isPickerVisible,
+                                    dateRangePickerState,
+                                    filterViewModel
+                                )
+                            }
                         }
                     }
                 }

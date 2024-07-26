@@ -44,22 +44,22 @@ class LocationService: Service() {
 
     private fun start() {
         val notification = NotificationCompat.Builder(this, "location")
-            .setContentTitle("Tracking location...")
-            .setContentText("Location: null")
+            .setContentTitle("Praćenje lokacije...")
+            .setContentText("Lokacija: null")
             .setSmallIcon(R.drawable.baseline_notifications_24)
             .setOngoing(true)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         locationClient
-            .getLocationUpdates(10000L) //1s
+            .getLocationUpdates(10000L) 
             .catch { e -> e.printStackTrace() }
             .onEach { location ->
                 val lat = location.latitude.toString()
                 val long = location.longitude.toString()
                 UserLocation.location.value=location
                 val updatedNotification = notification.setContentText(
-                    "Location: ($lat, $long)"
+                    "Lokacija: ($lat, $long)"
                 )
                 notificationManager.notify(1, updatedNotification.build())
             }

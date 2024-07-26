@@ -5,7 +5,7 @@ import android.net.Uri
 data class MarkerUIState(
     var title: String = "",
     var description: String = "",
-    var type: String = "",
+    var type: String = "Rupa na putu",
     var image: Uri = Uri.EMPTY,
 
     var titleError: String? = null,

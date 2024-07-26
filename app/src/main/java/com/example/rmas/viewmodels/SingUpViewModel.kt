@@ -14,45 +14,47 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.Firebase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class SingUpViewModel : ViewModel() {
-    //stanje unetih polja
-    var singUpUIState = mutableStateOf(SingUpUIState())
+    private val _singUpUIState = MutableStateFlow(SingUpUIState())
+    val singUpUIState = _singUpUIState.asStateFlow()
     private var allValidationsPassed = mutableStateOf(false)
     fun onEvent(event: SingUpUIEvent, context: Context, navigateToLogin: () -> Unit) {
         when (event) {
             is SingUpUIEvent.ImeChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     ime = event.ime
                 )
             }
 
             is SingUpUIEvent.PrezimeChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     prezime = event.prezime
                 )
             }
 
             is SingUpUIEvent.EmailChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     email = event.email
                 )
             }
 
             is SingUpUIEvent.TelefonChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     telefon = event.telefon
                 )
             }
 
             is SingUpUIEvent.UsernameChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     username = event.username
                 )
             }
 
             is SingUpUIEvent.PasswordChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     password = event.password
                 )
             }
@@ -62,7 +64,7 @@ class SingUpViewModel : ViewModel() {
             }
 
             is SingUpUIEvent.ImageChanged -> {
-                singUpUIState.value = singUpUIState.value.copy(
+                _singUpUIState.value = _singUpUIState.value.copy(
                     image = event.image
                 )
             }
@@ -80,27 +82,27 @@ class SingUpViewModel : ViewModel() {
 
     private fun createUser(context: Context, navigateToLogin: () -> Unit) {
         val db = Firebase.firestore
-        db.collection("users").whereEqualTo("username", singUpUIState.value.username).get()
+        db.collection("users").whereEqualTo("username", _singUpUIState.value.username).get()
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    if(it.result.isEmpty) {
+                    if (it.result.isEmpty) {
                         FirebaseAuth.getInstance()
                             .createUserWithEmailAndPassword(
-                                singUpUIState.value.email,
-                                singUpUIState.value.password
+                                _singUpUIState.value.email,
+                                _singUpUIState.value.password
                             )
-                            .addOnCompleteListener { it ->
-                                if (it.isSuccessful) {
+                            .addOnCompleteListener {res->
+                                if (res.isSuccessful) {
                                     FirebaseAuth.getInstance().currentUser!!.sendEmailVerification()
                                         .addOnCompleteListener {
                                             addToDatabase(
                                                 context,
-                                                ime = singUpUIState.value.ime,
-                                                prezime = singUpUIState.value.prezime,
-                                                email = singUpUIState.value.email,
-                                                username = singUpUIState.value.username,
-                                                telefon = singUpUIState.value.telefon,
-                                                image = singUpUIState.value.image,
+                                                ime = _singUpUIState.value.ime,
+                                                prezime = _singUpUIState.value.prezime,
+                                                email = _singUpUIState.value.email,
+                                                username = _singUpUIState.value.username,
+                                                telefon = _singUpUIState.value.telefon,
+                                                image = _singUpUIState.value.image,
                                                 onNavigate = { navigateToLogin() }
                                             )
                                         }
@@ -123,9 +125,12 @@ class SingUpViewModel : ViewModel() {
                                 ).show()
                                 Log.d("TAG", ex.localizedMessage)
                             }
-                    }
-                    else{
-                        Toast.makeText(context,"Uneto korisničko ime već postoji",Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Uneto korisničko ime već postoji",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
@@ -214,19 +219,19 @@ class SingUpViewModel : ViewModel() {
     }
 
     private fun validateData() {
-        val imeResult = Validator.validateIme(ime = singUpUIState.value.ime)
-        val prezimeResult = Validator.validatePrezime(prezime = singUpUIState.value.prezime)
-        val emailResult = Validator.validateEmail(email = singUpUIState.value.email)
-        val usernameResult = Validator.validateUsername(username = singUpUIState.value.username)
-        val passwordResult = Validator.validatePassword(password = singUpUIState.value.password)
-        val telefonResult = Validator.validateTelefon(telefon = singUpUIState.value.telefon)
-        val imageResult = Validator.validateImage(image = singUpUIState.value.image)
+        val imeResult = Validator.validateIme(ime = _singUpUIState.value.ime)
+        val prezimeResult = Validator.validatePrezime(prezime = _singUpUIState.value.prezime)
+        val emailResult = Validator.validateEmail(email = _singUpUIState.value.email)
+        val usernameResult = Validator.validateUsername(username = _singUpUIState.value.username)
+        val passwordResult = Validator.validatePassword(password = _singUpUIState.value.password)
+        val telefonResult = Validator.validateTelefon(telefon = _singUpUIState.value.telefon)
+        val imageResult = Validator.validateImage(image = _singUpUIState.value.image)
 
         allValidationsPassed.value =
             (imeResult.status && prezimeResult.status && emailResult.status && passwordResult.status
                     && telefonResult.status && usernameResult.status && imageResult.status)
 
-        singUpUIState.value = singUpUIState.value.copy(
+        _singUpUIState.value = _singUpUIState.value.copy(
             imeError = imeResult.errorMessage,
             prezimeError = prezimeResult.errorMessage,
             emailError = emailResult.errorMessage,

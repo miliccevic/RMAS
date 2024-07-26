@@ -44,9 +44,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.R
 import com.example.rmas.viewmodels.SingUpViewModel
 import com.example.rmas.presentation.singup.SingUpUIEvent
@@ -76,22 +79,16 @@ import java.io.File
 @Composable
 fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel = viewModel()) {
     val context = LocalContext.current
-    val state = singUpViewModel.singUpUIState
+    val state = singUpViewModel.singUpUIState.collectAsState()
     val scrollState = rememberScrollState()
-    val ime = remember { mutableStateOf("") }
-    val prezime = remember { mutableStateOf("") }
-    val username = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-    val telefon = remember { mutableStateOf("") }
-    val email = remember { mutableStateOf("") }
-    val imgUrl = remember { mutableStateOf(Uri.EMPTY) }
+//    val imgUrl = remember { mutableStateOf(Uri.EMPTY) }
 
-    val visible = remember { mutableStateOf(false) }
+    val visible = rememberSaveable { mutableStateOf(false) }
 
     val imageUtils = ImageUtils(context)
 
-    var currentPhoto by remember { mutableStateOf<String?>(null) }
-    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var currentPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    //var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -154,20 +151,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     label = { Text(text = "Ime") },
                     colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    value = ime.value,
+                    value = state.value.ime,
                     onValueChange = {
-                        ime.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.ImeChanged(it),
                             context,
                             navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
-                    isError = state.value.imeError!=null
+                    isError = state.value.imeError != null
                 )
-                if(state.value.imeError!=null){
-                    Text(text = state.value.imeError!!,
+                if (state.value.imeError != null) {
+                    Text(
+                        text = state.value.imeError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 OutlinedTextField(
                     modifier = Modifier
@@ -176,20 +174,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     label = { Text(text = "Prezime") },
                     colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    value = prezime.value,
+                    value = state.value.prezime,
                     onValueChange = {
-                        prezime.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PrezimeChanged(it),
                             context,
                             navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
-                    isError = state.value.prezimeError!=null
+                    isError = state.value.prezimeError != null
                 )
-                if(state.value.prezimeError!=null){
-                    Text(text = state.value.prezimeError!!,
+                if (state.value.prezimeError != null) {
+                    Text(
+                        text = state.value.prezimeError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 OutlinedTextField(
                     modifier = Modifier
@@ -199,20 +198,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     colors = OutlinedTextFieldDefaults.colors(
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    value = telefon.value,
+                    value = state.value.telefon,
                     onValueChange = {
-                        telefon.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.TelefonChanged(it),
                             context,
                             navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
-                    isError = state.value.telefonError!=null
+                    isError = state.value.telefonError != null
                 )
-                if(state.value.telefonError!=null){
-                    Text(text = state.value.telefonError!!,
+                if (state.value.telefonError != null) {
+                    Text(
+                        text = state.value.telefonError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 OutlinedTextField(
                     modifier = Modifier
@@ -221,20 +221,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     label = { Text(text = "Email") },
                     colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    value = email.value,
+                    value = state.value.email,
                     onValueChange = {
-                        email.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.EmailChanged(it),
                             context,
                             navigateToLogin = { navController.popBackStack("LoginScreen", false) })
                     },
-                    isError = state.value.emailError!=null
+                    isError = state.value.emailError != null
                 )
-                if(state.value.emailError!=null){
-                    Text(text = state.value.emailError!!,
+                if (state.value.emailError != null) {
+                    Text(
+                        text = state.value.emailError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 OutlinedTextField(
                     modifier = Modifier
@@ -244,9 +245,8 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     colors = OutlinedTextFieldDefaults.colors(
                     ),
                     keyboardOptions = KeyboardOptions.Default,
-                    value = username.value,
+                    value = state.value.username,
                     onValueChange = {
-                        username.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.UsernameChanged(it),
                             context,
@@ -254,12 +254,14 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                 navController.popBackStack("LoginScreen", false)
                             })
                     },
-                    isError = state.value.usernameError!=null
+                    isError = state.value.usernameError != null
                 )
-                if(state.value.usernameError!=null){
-                    Text(text = state.value.usernameError!!,
+                if (state.value.usernameError != null) {
+                    Text(
+                        text = state.value.usernameError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 OutlinedTextField(
                     modifier = Modifier
@@ -268,10 +270,9 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     label = { Text(text = "Šifra") },
                     colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    value = password.value,
-                    isError = state.value.passwordError!=null,
+                    value = state.value.password,
+                    isError = state.value.passwordError != null,
                     onValueChange = {
-                        password.value = it
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PasswordChanged(it),
                             context,
@@ -293,10 +294,12 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     else
                         PasswordVisualTransformation()
                 )
-                if(state.value.passwordError!=null){
-                    Text(text = state.value.passwordError!!,
+                if (state.value.passwordError != null) {
+                    Text(
+                        text = state.value.passwordError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End)) /*TODO*/
+                        modifier = Modifier.align(Alignment.End)
+                    ) /*TODO*/
                 }
                 Box(
                     modifier = Modifier
@@ -337,17 +340,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                     }
                             )
                         } else {
-                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
-                            bitmap = imageBitmap
+//                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
+//                            bitmap = imageBitmap
                             val uri = Uri.fromFile(File(currentPhoto))
-                            imgUrl.value = uri
+//                            imgUrl.value = uri
                             singUpViewModel.onEvent(
                                 SingUpUIEvent.ImageChanged(uri),
                                 context,
-                                navigateToLogin = { navController.popBackStack("LoginScreen", false) })
-                            Image(
-                                bitmap = imageBitmap,
-                                contentDescription = "",
+                                navigateToLogin = {
+                                    navController.popBackStack(
+                                        "LoginScreen",
+                                        false
+                                    )
+                                })
+                            Image(painter = rememberAsyncImagePainter(state.value.image),
+                                contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .clip(CircleShape)
@@ -362,13 +369,32 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                         launcher.launch(imageUtils.getIntent())
                                     }
                             )
+//                            Image(
+//                                bitmap = imageBitmap,
+//                                contentDescription = "",
+//                                contentScale = ContentScale.Crop,
+//                                modifier = Modifier
+//                                    .clip(CircleShape)
+//                                    .size(100.dp)
+//                                    .background(Color.Gray)
+//                                    .border(
+//                                        width = 1.dp,
+//                                        color = Color.Black,
+//                                        shape = CircleShape
+//                                    )
+//                                    .clickable {
+//                                        launcher.launch(imageUtils.getIntent())
+//                                    }
+//                            )
                         }
                     }
                 }
-                if(state.value.imageError!=null){ /*TODO*/
-                    Text(text = state.value.imageError!!,
+                if (state.value.imageError != null) { /*TODO*/
+                    Text(
+                        text = state.value.imageError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier=Modifier.align(Alignment.End))
+                        modifier = Modifier.align(Alignment.End)
+                    )
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Button(

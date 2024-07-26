@@ -11,21 +11,26 @@ import com.example.rmas.presentation.validation.Validator
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class LoginViewModel : ViewModel() {
-    var loginUIState = mutableStateOf(LoginUIState())
+
+    private val _loginUIState = MutableStateFlow(LoginUIState())
+    val loginUIState=_loginUIState.asStateFlow()
+
     private var allValidationsPassed = mutableStateOf(false)
 
     fun onEvent(event: LoginUIEvent, context: Context, navigateToHome: () -> Unit) {
         when (event) {
             is LoginUIEvent.UsernameChanged -> {
-                loginUIState.value = loginUIState.value.copy(
+                _loginUIState.value = _loginUIState.value.copy(
                     username = event.username
                 )
             }
 
             is LoginUIEvent.PasswordChanged -> {
-                loginUIState.value = loginUIState.value.copy(
+                _loginUIState.value = _loginUIState.value.copy(
                     password = event.password
                 )
             }
@@ -41,7 +46,7 @@ class LoginViewModel : ViewModel() {
         if (!allValidationsPassed.value)
             return
         val db = Firebase.firestore
-        db.collection("users").whereEqualTo("username", loginUIState.value.username).get()
+        db.collection("users").whereEqualTo("username", _loginUIState.value.username).get()
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     if(!it.result.isEmpty) {
@@ -50,7 +55,7 @@ class LoginViewModel : ViewModel() {
                             .getInstance()
                             .signInWithEmailAndPassword(
                                 email,
-                                loginUIState.value.password
+                                _loginUIState.value.password
                             )
                             .addOnFailureListener { e ->
                                 Log.d("TAG", e.localizedMessage)
@@ -107,11 +112,11 @@ class LoginViewModel : ViewModel() {
     }
 
     private fun validateData() {
-        val usernameResult = Validator.validateUsername(username = loginUIState.value.username)
-        val passwordResult = Validator.validatePasswordLogin(password = loginUIState.value.password)
+        val usernameResult = Validator.validateUsername(username = _loginUIState.value.username)
+        val passwordResult = Validator.validatePasswordLogin(password = _loginUIState.value.password)
 
         allValidationsPassed.value = (usernameResult.status && passwordResult.status)
-        loginUIState.value = loginUIState.value.copy(
+        _loginUIState.value = loginUIState.value.copy(
             usernameError = usernameResult.errorMessage,
             passwordError = passwordResult.errorMessage
         )
