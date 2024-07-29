@@ -97,6 +97,7 @@ class SingUpViewModel : ViewModel() {
                                         .addOnCompleteListener {
                                             addToDatabase(
                                                 context,
+                                                id=FirebaseAuth.getInstance().currentUser!!.uid,
                                                 ime = _singUpUIState.value.ime,
                                                 prezime = _singUpUIState.value.prezime,
                                                 email = _singUpUIState.value.email,
@@ -147,6 +148,7 @@ class SingUpViewModel : ViewModel() {
 
     private fun addToDatabase(
         context: Context,
+        id:String,
         ime: String,
         prezime: String,
         email: String,
@@ -168,7 +170,7 @@ class SingUpViewModel : ViewModel() {
                         .addOnCompleteListener { it1 ->
                             if (it1.isSuccessful) {
                                 url = it1.result.toString()
-                                val user = User(username, ime, prezime, telefon, url, email, 0L)
+                                val user = User(id,username, ime, prezime, telefon, url, email, 0L)
                                 db.collection("users")
                                     .document(uid)
                                     .set(user)

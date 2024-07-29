@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.firebase.firestore.DocumentId
 
 data class User(
+    var id:String="",
     var username:String="",
     var ime:String="",
     var prezime:String="",

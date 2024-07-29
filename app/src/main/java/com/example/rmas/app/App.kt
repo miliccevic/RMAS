@@ -47,7 +47,7 @@ fun App(navController: NavHostController, requestPermission: () -> Unit) {
                 AddMarkerScreen(navController)
             }
             composable("LocationScreen"){
-                LocationScreen(navController)
+                LocationScreen()
             }
         }
     }

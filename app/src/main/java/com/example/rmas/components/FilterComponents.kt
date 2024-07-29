@@ -2,50 +2,86 @@ package com.example.rmas.components
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.appcompat.view.menu.ListMenuItemView
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DateRangePickerState
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.rememberAsyncImagePainter
+import com.example.rmas.data.User
+import com.example.rmas.database.Firebase
 import com.example.rmas.presentation.filter.FilterUIEvent
+import com.example.rmas.presentation.filter.FilterUIState
 import com.example.rmas.utils.formatRange
 import com.example.rmas.viewmodels.FilterViewModel
 
@@ -59,7 +95,7 @@ fun Modifier.dateRangeDialogModifier(internalState: DateRangePickerState): Modif
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FilterChips(selected: SnapshotStateList<String>, filterViewModel: FilterViewModel) {
+fun FilterChips(state: State<FilterUIState>, filterViewModel: FilterViewModel) {
     val options =
         listOf("Saobraćajna nezgoda", "Rupa na putu", "Rad na putu", "Zatvorena ulica", "Ostalo")
     FlowRow(
@@ -69,16 +105,12 @@ fun FilterChips(selected: SnapshotStateList<String>, filterViewModel: FilterView
         verticalArrangement = Arrangement.Top
     ) {
         options.forEach {
-            FilterChip(selected = it in selected,
+            FilterChip(selected = it in state.value.types,
                 onClick = {
-                    if (it in selected)
-                        selected.remove(it)
-                    else
-                        selected.add(it)
-                    filterViewModel.onEvent(FilterUIEvent.TypeChanged(selected))
+                    filterViewModel.onEvent(FilterUIEvent.TypeChanged(it))
                 },
                 label = { Text(it) },
-                leadingIcon = if (it in selected) {
+                leadingIcon = if (it in state.value.types) {
                     {
                         Icon(
                             imageVector = Icons.Filled.Done,
@@ -179,16 +211,16 @@ fun calcFraction(a: Float, b: Float, pos: Float) =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePicker(
-    datum: MutableState<String>,
     isPickerVisible: MutableState<Boolean>,
     dateRangePickerState: DateRangePickerState,
-    filterViewModel: FilterViewModel
+    filterViewModel: FilterViewModel,
+    state: State<FilterUIState>
 ) {
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        value = datum.value,
+        value = state.value.datum,
         onValueChange = {},
         readOnly = true,
         leadingIcon = {
@@ -200,9 +232,9 @@ fun DateRangePicker(
             }
         },
         trailingIcon = {
-            if (datum.value != "Izaberite opseg") {
+            if (state.value.datum != "Izaberite opseg") {
                 IconButton(onClick = {
-                    datum.value = "Izaberite opseg"
+                    filterViewModel.onEvent(FilterUIEvent.DatumChanged("Izaberite opseg"))
                     filterViewModel.onEvent(FilterUIEvent.StartDateChanged(null))
                     filterViewModel.onEvent(FilterUIEvent.EndDateChanged(null))
                 }) {
@@ -254,9 +286,13 @@ fun DateRangePicker(
                                                 dateRangePickerState.selectedEndDateMillis!!
                                             )
                                         )
-                                        datum.value = formatRange(
-                                            filterViewModel.filterUIState.value.startDate,
-                                            filterViewModel.filterUIState.value.endDate
+                                        filterViewModel.onEvent(
+                                            FilterUIEvent.DatumChanged(
+                                                formatRange(
+                                                    filterViewModel.filterUIState.value.startDate,
+                                                    filterViewModel.filterUIState.value.endDate
+                                                )
+                                            )
                                         )
                                         isPickerVisible.value = false
                                     },
@@ -286,9 +322,13 @@ fun DateRangePicker(
                                                 dateRangePickerState.selectedEndDateMillis!!
                                             )
                                         )
-                                        datum.value = formatRange(
-                                            filterViewModel.filterUIState.value.startDate,
-                                            filterViewModel.filterUIState.value.endDate
+                                        filterViewModel.onEvent(
+                                            FilterUIEvent.DatumChanged(
+                                                formatRange(
+                                                    filterViewModel.filterUIState.value.startDate,
+                                                    filterViewModel.filterUIState.value.endDate
+                                                )
+                                            )
                                         )
                                         isPickerVisible.value = false
                                     },
@@ -305,4 +345,223 @@ fun DateRangePicker(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun FilterBottomSheet(
+    isSheetOpen: MutableState<Boolean>,
+    isPickerVisible: MutableState<Boolean>,
+    dateRangePickerState: DateRangePickerState,
+    sliderPosition: MutableState<Float>,
+    filterScrollState: ScrollState,
+    filterViewModel: FilterViewModel,
+    state: State<FilterUIState>,
+    showSecondSheet: MutableState<Boolean>,
+) {
+    Column(
+        modifier = Modifier
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { isSheetOpen.value = false }) {
+                Icon(Icons.Default.Close, contentDescription = null)
+            }
+            Text(
+                "Filteri",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            ) /*TODO*/
+            TextButton(onClick = { filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked) }) {
+                Text("Resetuj")
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(filterScrollState)
+        ) {
+            Text(text = "Rastojanje") /*TODO*/
+            DistanceSlider(sliderPosition, 0f..999f, filterViewModel)
+            HorizontalDivider(thickness = 1.dp)
+            Text("Tip")
+            FilterChips(state, filterViewModel)
+            HorizontalDivider(thickness = 1.dp)
+            Text(text = "Datum")
+            DateRangePicker(
+                isPickerVisible,
+                dateRangePickerState,
+                filterViewModel,
+                state
+            )
+            HorizontalDivider(thickness = 1.dp)
+            Text("Korisnici")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Korisnici", modifier = Modifier.weight(1f))
+                IconButton(onClick = { showSecondSheet.value = true }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null
+                    )
+                }
+            }
+            Text(text = "Naziv i opis")
+            SearchBar(state, filterViewModel)
+            Button(
+                onClick = {
+                    filterViewModel.onEvent(FilterUIEvent.OkButtonClicked)
+                    isSheetOpen.value = false
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Potvrdi")
+            }
+        }
+    }
+}
+@Composable
+fun SecondBottomSheet(
+    isSheetOpen: MutableState<Boolean>,
+    filterViewModel: FilterViewModel,
+    state: State<FilterUIState>
+) {
+    var users by remember { mutableStateOf(emptyList<User>()) }
+    Firebase.getAllUsers {
+        users = it
+    }
 
+    Column(
+        modifier = Modifier
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { isSheetOpen.value = false }) {
+                Icon(Icons.Default.Close, contentDescription = null)
+            }
+            TextButton(onClick = {filterViewModel.onEvent(FilterUIEvent.ResetUsersClicked)}) {
+                Text("Resetuj")
+            }
+        }
+        LazyColumn(
+            state = rememberLazyListState(),
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            items(users) { user ->
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .clickable {
+                                filterViewModel.onEvent(FilterUIEvent.UsersChanged(user.id))
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = user.username, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.weight(1f))
+//                        Checkbox(checked = user.username in selectedUsers,
+//                            onCheckedChange = {
+//                                if(user.username in selectedUsers)
+//                                    selectedUsers.remove(user.username)
+//                                else
+//                                    selectedUsers.add(user.username)
+//                            }
+//                        )
+                        if (user.id in state.value.users) { /*TODO*/
+                            Icon(imageVector = Icons.Default.Check, contentDescription = null)
+                        }
+                    }
+                }
+                HorizontalDivider(color = Color.Gray, thickness = 1.dp)
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheet(
+    isSheetOpen: MutableState<Boolean>,
+    sheetState: SheetState,
+    isPickerVisible: MutableState<Boolean>,
+    dateRangePickerState: DateRangePickerState,
+    sliderPosition: MutableState<Float>,
+    filterScrollState: ScrollState,
+    showSecondSheet: MutableState<Boolean>,
+    filterViewModel: FilterViewModel,
+    state: State<FilterUIState>,
+) {
+    ModalBottomSheet(
+        onDismissRequest = {
+            isSheetOpen.value = false
+            showSecondSheet.value = false
+        },
+        sheetState = sheetState,
+    ) {
+        if (!showSecondSheet.value) {
+            FilterBottomSheet(
+                isSheetOpen = isSheetOpen,
+                isPickerVisible = isPickerVisible,
+                dateRangePickerState = dateRangePickerState,
+                sliderPosition = sliderPosition,
+                filterScrollState = filterScrollState,
+                filterViewModel = filterViewModel,
+                state = state,
+                showSecondSheet = showSecondSheet,
+            )
+        } else {
+            SecondBottomSheet(
+                showSecondSheet,
+                filterViewModel,
+                state
+            )
+        }
+    }
+}
+
+@Composable
+fun SearchBar(state: State<FilterUIState>, filterViewModel: FilterViewModel) {
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        label = { Text(text = "Pretraga") },
+        value = state.value.searchText,
+        onValueChange = {
+            filterViewModel.onEvent(FilterUIEvent.SearchTextChanged(it))
+        },
+        readOnly = false,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = null
+            )
+        },
+        trailingIcon = {
+            if (state.value.searchText != "") {
+                IconButton(onClick = {
+                    filterViewModel.onEvent(FilterUIEvent.SearchTextChanged(""))
+                }) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = null
+                    )
+                }
+            }
+        }
+    )
+}

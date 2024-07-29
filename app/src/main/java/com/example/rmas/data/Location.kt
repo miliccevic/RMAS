@@ -1,8 +1,6 @@
 package com.example.rmas.data
 
-import android.net.Uri
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.GeoPoint
 import java.util.Date
 
@@ -14,4 +12,13 @@ data class Location(
     var type:String="",
     var image: String="",
     var date:Timestamp = Timestamp(Date())
-)
+){
+    fun doesMatchSearchQuery(query:String):Boolean{ /*TODO*/
+        val matchingCombinations= listOf(
+            "ddsg"
+        )
+        return matchingCombinations.any {
+            it.contains(query,ignoreCase = true)
+        }
+    }
+}

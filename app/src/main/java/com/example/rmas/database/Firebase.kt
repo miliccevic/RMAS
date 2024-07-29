@@ -2,7 +2,11 @@ package com.example.rmas.database
 
 import com.example.rmas.data.Location
 import com.example.rmas.data.User
+import com.example.rmas.presentation.filter.FilterUIState
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.Filter
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 
@@ -17,12 +21,6 @@ object Firebase {
                     listener(locations)
                 }
             }
-//        db.collection("locations").get()
-//            .addOnSuccessListener {
-//                for (doc in it)
-//                    locations.add(doc.toObject(Location::class.java))
-//                listener(locations)
-//            }
     }
 
     fun getUser(uid: String, listener: (User?) -> Unit) {
@@ -44,11 +42,5 @@ object Firebase {
                     listener(users)
                 }
             }
-//        db.collection("users").orderBy("points").get()
-//            .addOnSuccessListener {
-//                for (doc in it)
-//                    users.add(doc.toObject(User::class.java))
-//                listener(users)
-//            }
     }
 }

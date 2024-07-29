@@ -122,7 +122,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack("LoginScreen", false) }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, /*TODO strelica*/
                             contentDescription = "Back",
                             tint = Color.Black
                         )

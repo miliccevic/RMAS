@@ -4,10 +4,8 @@ import  android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,12 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AddLocation
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
@@ -34,7 +30,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -42,12 +37,12 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,13 +52,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -84,10 +77,11 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import coil.compose.rememberAsyncImagePainter
-import com.example.rmas.components.DateRangePicker
-import com.example.rmas.components.DistanceSlider
-import com.example.rmas.components.FilterChips
+import com.example.rmas.components.BottomSheet
 import com.example.rmas.viewmodels.FilterViewModel
+import com.google.firebase.Timestamp
+import java.util.Date
+import android.location.Location.distanceBetween
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,10 +95,14 @@ fun HomeScreen(
 ) {
     val filterScrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState()
-    var isSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var isSheetOpen = rememberSaveable { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+
     val context = LocalContext.current
+    val state = filterViewModel.filterUIState.collectAsState()
+    val filterButtonClicked = filterViewModel.filterButtonClicked.collectAsState()
+
     var selectedIndex by rememberSaveable {
         mutableIntStateOf(1)
     }
@@ -114,7 +112,6 @@ fun HomeScreen(
     Firebase.getLocations {
         locations = it
     }
-
     var ime by remember {
         mutableStateOf("")
     }
@@ -149,12 +146,54 @@ fun HomeScreen(
         mutableStateOf(MapProperties(mapType = MapType.TERRAIN))
     }
 
-    val selectedType = remember { mutableStateListOf("") }
-    val datum = remember { mutableStateOf("Izaberite opseg") }
+    var navLabel by rememberSaveable {
+        mutableStateOf("Mapa")
+    }
+
     val isPickerVisible = remember { mutableStateOf(false) }
     val dateRangePickerState = rememberDateRangePickerState()
-    val sliderPosition = remember { mutableFloatStateOf(0f) }
+    val sliderPosition = rememberSaveable { mutableFloatStateOf(0f) }
+    val showSecondSheet = rememberSaveable { mutableStateOf(false) }
 
+    val results = remember { mutableStateOf(FloatArray(1)) }
+    if (userLocation.value != null && filterButtonClicked.value) {
+        if (state.value.types.isNotEmpty()) {
+            locations = locations.filter {
+                it.type in state.value.types
+            }
+        }
+        if (state.value.users.isNotEmpty()) {
+            locations = locations.filter {
+                it.userId in state.value.users
+            }
+        }
+        if (state.value.distance != null) { /*TODO*/
+            locations = locations.filter {
+                distanceBetween(
+                    it.location.latitude,
+                    it.location.longitude,
+                    userLocation.value!!.latitude,
+                    userLocation.value!!.longitude,
+                    results.value
+                )
+                results.value[0] <= state.value.distance!!
+            }
+        }
+        if (state.value.startDate != null && state.value.endDate != null) {
+            locations = locations.filter {
+                it.date >= Timestamp(Date(state.value.startDate!!)) && it.date <= Timestamp(
+                    Date(
+                        state.value.endDate!!
+                    )
+                )
+            }
+        }
+        if(state.value.searchText!=""){
+            locations=locations.filter {
+                it.doesMatchSearchQuery(state.value.searchText)
+            }
+        }
+    }
     requestPermission() /*TODO*/
 
     ModalNavigationDrawer(
@@ -188,7 +227,7 @@ fun HomeScreen(
                     selected = selectedIndex == 1, /*TODO*/
                     onClick = {
                         selectedIndex = 1
-                        navController.popBackStack("HomeScreen", false)
+                        navLabel = "Mapa"
                         scope.launch {
                             drawerState.close()
                         }
@@ -207,7 +246,7 @@ fun HomeScreen(
                     selected = selectedIndex == 2,
                     onClick = {
                         selectedIndex = 2
-                        navController.navigate("LeaderboardScreen")
+                        navLabel = "Rang lista"
                         scope.launch {
                             drawerState.close()
                         }
@@ -222,11 +261,11 @@ fun HomeScreen(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
-                    label = { Text(text = "Lista lokacija") },
+                    label = { Text(text = "Lista objekata") },
                     selected = selectedIndex == 3,
                     onClick = {
                         selectedIndex = 3
-                        navController.navigate("LocationScreen")
+                        navLabel = "Lista objekata"
                         scope.launch {
                             drawerState.close()
                         }
@@ -266,7 +305,7 @@ fun HomeScreen(
         }, drawerState = drawerState
     ) {
         Scaffold(topBar = {
-            CenterAlignedTopAppBar(title = { Text(text = "Mapa", color = Color.Black) },
+            CenterAlignedTopAppBar(title = { Text(text = navLabel, color = Color.Black) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.LightGray,
                 ),/*TODO ruzna boja*/
@@ -285,25 +324,29 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        isSheetOpen = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.FilterList,
-                            contentDescription = "Filter",
-                            tint = Color.Black
-                        )
-                    }
+                    if (selectedIndex == 1) {
+                        IconButton(onClick = {
+                            isSheetOpen.value = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.FilterList,
+                                contentDescription = "Filter",
+                                tint = Color.Black
+                            )
+                        }
+                    } else null
                 })
         }, floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.padding(16.dp),
-                onClick = { navController.navigate("AddMarkerScreen") },
-            ) {
-                Icon(
-                    Icons.Filled.AddLocation, contentDescription = ""
-                )
-            }
+            if (selectedIndex == 1) {
+                FloatingActionButton(
+                    modifier = Modifier.padding(16.dp),
+                    onClick = { navController.navigate("AddMarkerScreen") },
+                ) {
+                    Icon(
+                        Icons.Filled.AddLocation, contentDescription = ""
+                    )
+                }
+            } else null
         }) { values ->
             Surface(
                 color = Color.White,
@@ -313,92 +356,64 @@ fun HomeScreen(
                     .padding(values)
             ) {
                 /*TODO*/
-                Box(modifier = Modifier) {
-                    GoogleMap(modifier = Modifier.fillMaxSize(),
-                        cameraPositionState = cameraPositionState,
-                        properties = properties,
-                        uiSettings = uiSettings,
-                        onMapClick = {}) {
-                        if (userLocation.value != null) {
-                            cameraPositionState.move(
-                                CameraUpdateFactory.newLatLng(
-                                    LatLng(
-                                        userLocation.value!!.latitude,
-                                        userLocation.value!!.longitude
-                                    )
-                                )
-                            )
-                            Marker(
-                                state = MarkerState(
-                                    position = LatLng(
-                                        userLocation.value!!.latitude,
-                                        userLocation.value!!.longitude
-                                    )
-                                )
-                            )
-                        }
-                        locations.let {
-                            for (marker in it)
-                                Marker(
-                                    state = MarkerState(
-                                        position = LatLng(
-                                            marker.location.latitude, marker.location.longitude
+                if (selectedIndex == 1) {
+                    Box(modifier = Modifier) {
+                        GoogleMap(modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = cameraPositionState,
+                            properties = properties,
+                            uiSettings = uiSettings,
+                            onMapClick = {}) {
+                            if (userLocation.value != null) {
+                                cameraPositionState.move(
+                                    CameraUpdateFactory.newLatLng(
+                                        LatLng(
+                                            userLocation.value!!.latitude,
+                                            userLocation.value!!.longitude
                                         )
                                     )
                                 )
-                        }
-                    }
-                }
-                if (isSheetOpen) {
-                    ModalBottomSheet(
-                        onDismissRequest = {
-                            isSheetOpen = false
-                        },
-                        sheetState = sheetState,
-                    ) {
-                        Column(modifier = Modifier) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(onClick = { isSheetOpen = false }) {
-                                    Icon(Icons.Default.Close, contentDescription = null)
-                                }
-                                Text(
-                                    "Filteri",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                ) /*TODO*/
-                                TextButton(onClick = {}) {
-                                    Text("Resetuj")
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                                    .verticalScroll(filterScrollState)
-                            ) {
-                                Text(text = "Rastojanje")
-                                DistanceSlider(sliderPosition,0f..999f, filterViewModel)
-                                HorizontalDivider(thickness = 1.dp)
-                                Text("Tip")
-                                FilterChips(selectedType, filterViewModel)
-                                HorizontalDivider(thickness = 1.dp)
-                                Text(text = "Datum")
-                                DateRangePicker(
-                                    datum,
-                                    isPickerVisible,
-                                    dateRangePickerState,
-                                    filterViewModel
+                                Marker(
+                                    state = MarkerState(
+                                        position = LatLng(
+                                            userLocation.value!!.latitude,
+                                            userLocation.value!!.longitude
+                                        )
+                                    )
                                 )
                             }
+                            locations.let {/*TODO clustering*/
+                                for (marker in it)
+                                    Marker(
+                                        state = MarkerState(
+                                            position = LatLng(
+                                                marker.location.latitude, marker.location.longitude
+                                            )
+                                        )
+                                    )
+                            }
                         }
                     }
+                } else if (selectedIndex == 2) {
+                    LeaderboardScreen()
+                } else {
+                    LocationScreen()
+                }
+                if (isSheetOpen.value) {
+                    BottomSheet(
+                        isSheetOpen = isSheetOpen,
+                        sheetState = sheetState,
+                        isPickerVisible = isPickerVisible,
+                        dateRangePickerState = dateRangePickerState,
+                        sliderPosition = sliderPosition,
+                        filterScrollState = filterScrollState,
+                        showSecondSheet = showSecondSheet,
+                        filterViewModel = filterViewModel,
+                        state = state,
+                    )
                 }
             }
         }
     }
 }
+
 
