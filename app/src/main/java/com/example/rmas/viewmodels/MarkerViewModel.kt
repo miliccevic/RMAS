@@ -4,10 +4,8 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.rmas.data.Location
-import com.example.rmas.presentation.filter.FilterUIState
 import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.presentation.marker.MarkerUIState
 import com.example.rmas.presentation.validation.Validator
@@ -18,11 +16,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.toObject
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 class MarkerViewModel() : ViewModel() {
@@ -87,7 +83,9 @@ class MarkerViewModel() : ViewModel() {
                         .addOnCompleteListener { it1 ->
                             if (it1.isSuccessful) {
                                 url = it1.result.toString()
+                                val ref = db.collection("locations").document()
                                 val location = Location(
+                                    id = ref.id,
                                     userId = userId,
                                     description = _markerUIState.value.description,
                                     title = _markerUIState.value.title,
@@ -99,15 +97,14 @@ class MarkerViewModel() : ViewModel() {
                                         UserLocation.location.value!!.longitude
                                     )
                                 )
-                                db.collection("locations")
-                                    .add(location)
+                                ref.set(location)
                                     .addOnCompleteListener {
                                         Toast.makeText(
                                             context,
                                             "Uspešno dodata lokacija na mapu.",
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                        addPoints(context, onClick = { navigateToHome() })
+                                        addPoints(context, 5L, onClick = { navigateToHome() })
                                     }
                                     .addOnFailureListener { e ->
                                         Toast.makeText(
@@ -139,10 +136,10 @@ class MarkerViewModel() : ViewModel() {
             }
     }
 
-    private fun addPoints(context: Context, onClick: () -> Unit) {
+    private fun addPoints(context: Context, points: Long, onClick: () -> Unit) {
         var uid = FirebaseAuth.getInstance().currentUser!!.uid
         val db = Firebase.firestore
-        db.collection("users").document(uid).update("points", FieldValue.increment(5L))
+        db.collection("users").document(uid).update("points", FieldValue.increment(points))
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     Toast.makeText(context, "Dobili ste dodatnih 5 poena!", Toast.LENGTH_SHORT)
