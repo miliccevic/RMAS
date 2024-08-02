@@ -22,7 +22,7 @@ import com.google.firebase.auth.FirebaseUser
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun App(navController: NavHostController, requestPermission: () -> Unit) {
+fun App(navController: NavHostController) {
     val startDestination: String = if (FirebaseAuth.getInstance().currentUser == null)
         "LoginScreen"
     else "HomeScreen"
@@ -38,7 +38,7 @@ fun App(navController: NavHostController, requestPermission: () -> Unit) {
                 SingUpScreen(navController)
             }
             composable("HomeScreen") {
-                HomeScreen(startDestination, navController, requestPermission)
+                HomeScreen(startDestination, navController)
             }
             composable("LeaderboardScreen") {
                 LeaderboardScreen()

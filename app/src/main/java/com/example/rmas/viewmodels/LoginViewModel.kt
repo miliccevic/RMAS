@@ -80,6 +80,7 @@ class LoginViewModel : ViewModel() {
                                             "Uspešno prijavljivanje.",
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                        _loginUIState.value=LoginUIState()
                                         navigateToHome.invoke()
                                     }
                                 }

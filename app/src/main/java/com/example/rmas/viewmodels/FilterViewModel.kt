@@ -11,8 +11,6 @@ class FilterViewModel : ViewModel() {
     private val _filterUIState = MutableStateFlow(FilterUIState())
     val filterUIState = _filterUIState.asStateFlow()
 
-    private val _filterButtonClicked = MutableStateFlow(false)
-    val filterButtonClicked = _filterButtonClicked.asStateFlow()
     fun onEvent(event: FilterUIEvent) {
         when (event) {
             is FilterUIEvent.StartDateChanged -> {
@@ -25,10 +23,6 @@ class FilterViewModel : ViewModel() {
                 _filterUIState.value = _filterUIState.value.copy(
                     endDate = event.endDate
                 )
-            }
-
-            is FilterUIEvent.OkButtonClicked -> {
-                _filterButtonClicked.value=true
             }
 
             is FilterUIEvent.TypeChanged -> {
@@ -68,7 +62,6 @@ class FilterViewModel : ViewModel() {
             }
 
             FilterUIEvent.ResetButtonClicked -> {
-                _filterButtonClicked.value=false
                 _filterUIState.value.users= emptyList()
                 _filterUIState.value.types= emptyList()
                 _filterUIState.value.endDate=null

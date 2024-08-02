@@ -1,11 +1,19 @@
 package com.example.rmas.screens
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import  android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AddAlert
 import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocationOn
@@ -46,7 +55,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,7 +89,15 @@ import com.example.rmas.components.BottomSheet
 import com.example.rmas.viewmodels.FilterViewModel
 import com.google.firebase.Timestamp
 import java.util.Date
-import android.location.Location.distanceBetween
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import com.example.rmas.components.LocationBottomSheet
+import com.example.rmas.services.location.LocationService
+import com.google.maps.android.SphericalUtil
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,19 +105,21 @@ import android.location.Location.distanceBetween
 fun HomeScreen(
     startDestination: String,
     navController: NavController,
-    requestPermission: () -> Unit,
     loginViewModel: LoginViewModel = viewModel(),
     filterViewModel: FilterViewModel = viewModel()
 ) {
     val filterScrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState()
     var isSheetOpen = rememberSaveable { mutableStateOf(false) }
+
+    val bottomSheetState = rememberModalBottomSheetState()
+    var isBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val state = filterViewModel.filterUIState.collectAsState()
-    val filterButtonClicked = filterViewModel.filterButtonClicked.collectAsState()
 
     var selectedIndex by rememberSaveable {
         mutableIntStateOf(1)
@@ -109,8 +127,10 @@ fun HomeScreen(
 
     var userLocation by remember { mutableStateOf(UserLocation.location) }
     var locations by remember { mutableStateOf(emptyList<Location>()) }
+    var locationsCopy by remember { mutableStateOf(emptyList<Location>()) }
     Firebase.getLocations {
         locations = it
+        locationsCopy = locations
     }
     var ime by remember {
         mutableStateOf("")
@@ -154,47 +174,90 @@ fun HomeScreen(
     val dateRangePickerState = rememberDateRangePickerState()
     val sliderPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val showSecondSheet = rememberSaveable { mutableStateOf(false) }
+    val clickedLocation = remember { mutableStateOf(Location()) }
 
-    val results = remember { mutableStateOf(FloatArray(1)) }
-    if (userLocation.value != null && filterButtonClicked.value) {
-        if (state.value.types.isNotEmpty()) {
-            locations = locations.filter {
-                it.type in state.value.types
+    fun filterButtonClickedFun() {
+        if (userLocation.value != null) {
+            locations = locationsCopy
+            if (state.value.types.isNotEmpty()) {
+                locations = locations.filter {
+                    it.type in state.value.types
+                }
             }
-        }
-        if (state.value.users.isNotEmpty()) {
-            locations = locations.filter {
-                it.userId in state.value.users
+            if (state.value.users.isNotEmpty()) {
+                locations = locations.filter {
+                    it.userId in state.value.users
+                }
             }
-        }
-        if (state.value.distance != null) { /*TODO*/
-            locations = locations.filter {
-                distanceBetween(
-                    it.location.latitude,
-                    it.location.longitude,
-                    userLocation.value!!.latitude,
-                    userLocation.value!!.longitude,
-                    results.value
-                )
-                results.value[0] <= state.value.distance!!
+            if (state.value.distance != null) {
+                locations = locations.filter {
+                    val startLatLng = LatLng(it.location.latitude, it.location.longitude)
+                    val endLatLng =
+                        LatLng(userLocation.value!!.latitude, userLocation.value!!.longitude)
+                    SphericalUtil.computeDistanceBetween(
+                        startLatLng,
+                        endLatLng
+                    ) <= state.value.distance!! * 1000
+                }
             }
-        }
-        if (state.value.startDate != null && state.value.endDate != null) {
-            locations = locations.filter {
-                it.date >= Timestamp(Date(state.value.startDate!!)) && it.date <= Timestamp(
-                    Date(
-                        state.value.endDate!!
+            if (state.value.startDate != null && state.value.endDate != null) {
+                locations = locations.filter {
+                    it.date >= Timestamp(Date(state.value.startDate!!)) && it.date <= Timestamp(
+                        Date(
+                            state.value.endDate!!
+                        )
                     )
-                )
+                }
             }
-        }
-        if(state.value.searchText!=""){
-            locations=locations.filter {
-                it.doesMatchSearchQuery(state.value.searchText)
+            if (state.value.searchText != "") {
+                locations = locations.filter {
+                    it.doesMatchSearchQuery(state.value.searchText)
+                }
             }
         }
     }
-    requestPermission() /*TODO*/
+
+    val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    val isTrackingServiceEnabled by rememberSaveable {
+        mutableStateOf(
+            sharedPreferences.getBoolean(
+                "location_tracking",
+                false
+            )
+        )
+    }
+
+    if (ActivityCompat.checkSelfPermission( /*TODO*/
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        ActivityCompat.requestPermissions(
+            context as Activity,
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
+            1
+        )
+    } else {
+        if (isTrackingServiceEnabled) {
+            Intent(context, LocationService::class.java).apply {
+                action = LocationService.ACTION_START_NEARBY
+                context.startForegroundService(this)
+            }
+        } else {
+            Intent(context, LocationService::class.java).apply {
+                action = LocationService.ACTION_START
+                context.startForegroundService(this)
+            }
+        }
+
+    }
+    var checked by rememberSaveable { mutableStateOf(isTrackingServiceEnabled) }
 
     ModalNavigationDrawer(
         gesturesEnabled = false,
@@ -224,7 +287,7 @@ fun HomeScreen(
                 }
                 NavigationDrawerItem(
                     label = { Text(text = "Mapa") },
-                    selected = selectedIndex == 1, /*TODO*/
+                    selected = selectedIndex == 1,
                     onClick = {
                         selectedIndex = 1
                         navLabel = "Mapa"
@@ -280,6 +343,81 @@ fun HomeScreen(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 HorizontalDivider(modifier = Modifier.padding(5.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(NavigationDrawerItemDefaults.ItemPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(start = 18.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AddAlert,
+                            contentDescription = "",
+                            tint = Color.Black
+                        )
+                        Text(text = "Servis", fontSize = 14.sp)
+                    }
+                    Switch(checked = checked,
+                        onCheckedChange = {
+                            if (ActivityCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                Toast.makeText(
+                                    context,
+                                    "Potrebno je da uključite lokaciju kako biste mogli da aktivirate servis.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                checked = it
+                                if (it) {
+                                    Intent(context, LocationService::class.java).apply {
+                                        action = LocationService.ACTION_START_NEARBY
+                                        context.startForegroundService(this)
+                                    }
+                                    with(sharedPreferences.edit()) {
+                                        putBoolean("location_tracking", true)
+                                        apply()
+                                    }
+                                } else {
+                                    Intent(context, LocationService::class.java).apply {
+                                        action = LocationService.ACTION_STOP
+                                        context.stopService(this)
+                                    }
+                                    Intent(context, LocationService::class.java).apply {
+                                        action = LocationService.ACTION_START
+                                        context.startForegroundService(this)
+                                    }
+                                    with(sharedPreferences.edit()) {
+                                        putBoolean("location_tracking", false)
+                                        apply()
+                                    }
+                                }
+                            }
+                        },
+                        thumbContent = if (checked) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
                 NavigationDrawerItem(
                     label = { Text(text = "Odjavi se") },
                     selected = false,
@@ -299,7 +437,8 @@ fun HomeScreen(
                             tint = Color.Black
                         )
                     },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    modifier = Modifier
+                        .padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }
         }, drawerState = drawerState
@@ -381,9 +520,14 @@ fun HomeScreen(
                                     )
                                 )
                             }
-                            locations.let {/*TODO clustering*/
-                                for (marker in it)
+                            locations.let { locations ->
+                                for (marker in locations)
                                     Marker(
+                                        onClick = {
+                                            isBottomSheetOpen.value = true
+                                            clickedLocation.value = marker
+                                            false
+                                        },
                                         state = MarkerState(
                                             position = LatLng(
                                                 marker.location.latitude, marker.location.longitude
@@ -409,6 +553,14 @@ fun HomeScreen(
                         showSecondSheet = showSecondSheet,
                         filterViewModel = filterViewModel,
                         state = state,
+                        filterButtonClicked = { filterButtonClickedFun() }
+                    )
+                }
+                if (isBottomSheetOpen.value) {
+                    LocationBottomSheet(
+                        sheetState = bottomSheetState,
+                        isSheetOpen = isBottomSheetOpen,
+                        location = clickedLocation.value
                     )
                 }
             }

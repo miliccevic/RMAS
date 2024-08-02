@@ -357,6 +357,7 @@ fun FilterBottomSheet(
     filterViewModel: FilterViewModel,
     state: State<FilterUIState>,
     showSecondSheet: MutableState<Boolean>,
+    filterButtonClicked: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -417,7 +418,7 @@ fun FilterBottomSheet(
             SearchBar(state, filterViewModel)
             Button(
                 onClick = {
-                    filterViewModel.onEvent(FilterUIEvent.OkButtonClicked)
+                    filterButtonClicked.invoke()
                     isSheetOpen.value = false
                 },
                 modifier = Modifier
@@ -428,6 +429,7 @@ fun FilterBottomSheet(
         }
     }
 }
+
 @Composable
 fun SecondBottomSheet(
     isSheetOpen: MutableState<Boolean>,
@@ -450,7 +452,7 @@ fun SecondBottomSheet(
             IconButton(onClick = { isSheetOpen.value = false }) {
                 Icon(Icons.Default.Close, contentDescription = null)
             }
-            TextButton(onClick = {filterViewModel.onEvent(FilterUIEvent.ResetUsersClicked)}) {
+            TextButton(onClick = { filterViewModel.onEvent(FilterUIEvent.ResetUsersClicked) }) {
                 Text("Resetuj")
             }
         }
@@ -465,7 +467,7 @@ fun SecondBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
-                            .clickable {
+                            .clickable { /*TODO ruzno*/
                                 filterViewModel.onEvent(FilterUIEvent.UsersChanged(user.id))
                             },
                         verticalAlignment = Alignment.CenterVertically
@@ -504,6 +506,7 @@ fun BottomSheet(
     showSecondSheet: MutableState<Boolean>,
     filterViewModel: FilterViewModel,
     state: State<FilterUIState>,
+    filterButtonClicked: () -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = {
@@ -522,6 +525,7 @@ fun BottomSheet(
                 filterViewModel = filterViewModel,
                 state = state,
                 showSecondSheet = showSecondSheet,
+                filterButtonClicked = { filterButtonClicked() }
             )
         } else {
             SecondBottomSheet(

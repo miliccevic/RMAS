@@ -9,7 +9,6 @@ sealed class FilterUIEvent {
     data class DatumChanged(val datum:String):FilterUIEvent()
     data class UsersChanged(val user:String):FilterUIEvent()
     data class SearchTextChanged(val searchText:String):FilterUIEvent()
-    object OkButtonClicked : FilterUIEvent()
     object ResetButtonClicked:FilterUIEvent()
     object ResetUsersClicked:FilterUIEvent()
 }
