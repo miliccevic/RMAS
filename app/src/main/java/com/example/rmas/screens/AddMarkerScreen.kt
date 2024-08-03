@@ -278,10 +278,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                                     }
                             )
                         } else {
-//                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
-//                            bitmap = imageBitmap
                             val uri = Uri.fromFile(File(currentPhoto))
-//                            imgUrl.value = uri
                             markerViewModel.onEvent(
                                 MarkerUIEvent.ImageChanged(uri),
                                 context,
@@ -303,23 +300,6 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                                         launcher.launch(imageUtils.getIntent())
                                     }
                             )
-//                            Image(
-//                                bitmap = imageBitmap,
-//                                contentDescription = "",
-//                                contentScale = ContentScale.Crop,
-//                                modifier = Modifier
-//                                    .clip(CircleShape)
-//                                    .size(100.dp)
-//                                    .background(Color.Gray)
-//                                    .border(
-//                                        width = 1.dp,
-//                                        color = Color.Black,
-//                                        shape = CircleShape
-//                                    )
-//                                    .clickable {
-//                                        launcher.launch(imageUtils.getIntent())
-//                                    }
-//                            )
                         }
                     }
                 }

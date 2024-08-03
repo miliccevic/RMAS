@@ -3,7 +3,6 @@ package com.example.rmas.screens
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,15 +46,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -81,24 +78,20 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
     val context = LocalContext.current
     val state = singUpViewModel.singUpUIState.collectAsState()
     val scrollState = rememberScrollState()
-//    val imgUrl = remember { mutableStateOf(Uri.EMPTY) }
 
     val visible = rememberSaveable { mutableStateOf(false) }
 
     val imageUtils = ImageUtils(context)
 
     var currentPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-    //var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
                 val data = it.data?.data
                 currentPhoto = if (data == null) {
-                    // Camera intent
                     imageUtils.currentPhotoPath
                 } else {
-                    // Gallery Pick Intent
                     imageUtils.getPathFromGalleryUri(data)
                 }
             }
@@ -116,13 +109,12 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.LightGray,
                 ),
-                /*TODO ruzna boja*/
                 modifier = Modifier
                     .fillMaxWidth(),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack("LoginScreen", false) }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, /*TODO strelica*/
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = Color.Black
                         )
@@ -136,7 +128,12 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
-                .padding(28.dp) /*TODO padding top manje*/
+                .padding(
+                    top = 10.dp,
+                    start = 28.dp,
+                    end = 28.dp,
+                    bottom = 28.dp
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -156,7 +153,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.ImeChanged(it),
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     isError = state.value.imeError != null
                 )
@@ -179,7 +176,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PrezimeChanged(it),
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     isError = state.value.prezimeError != null
                 )
@@ -203,7 +200,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.TelefonChanged(it),
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     isError = state.value.telefonError != null
                 )
@@ -226,7 +223,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.EmailChanged(it),
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     isError = state.value.emailError != null
                 )
@@ -250,9 +247,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.UsernameChanged(it),
                             context,
-                            navigateToLogin = {
-                                navController.popBackStack("LoginScreen", false)
-                            })
+                            navigateToLogin = {})
                     },
                     isError = state.value.usernameError != null
                 )
@@ -276,7 +271,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.PasswordChanged(it),
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     trailingIcon = {
                         val iconImage = if (visible.value) {
@@ -298,8 +293,8 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     Text(
                         text = state.value.passwordError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    ) /*TODO*/
+                        textAlign = TextAlign.End
+                    )
                 }
                 Box(
                     modifier = Modifier
@@ -313,7 +308,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     ) {
                         if (currentPhoto == null) {
                             Image(
-                                //bitmap= bitmap.value.asImageBitmap(),
                                 painter = painterResource(id = R.drawable.baseline_photo_camera_24),
                                 contentDescription = "",
                                 contentScale = ContentScale.Crop,
@@ -327,7 +321,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                         shape = CircleShape
                                     )
                                     .clickable {
-                                        //openBottomSheet.value = true
                                         if (ContextCompat.checkSelfPermission(
                                                 context,
                                                 Manifest.permission.CAMERA
@@ -340,19 +333,11 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                     }
                             )
                         } else {
-//                            val imageBitmap = BitmapFactory.decodeFile(currentPhoto).asImageBitmap()
-//                            bitmap = imageBitmap
                             val uri = Uri.fromFile(File(currentPhoto))
-//                            imgUrl.value = uri
                             singUpViewModel.onEvent(
                                 SingUpUIEvent.ImageChanged(uri),
                                 context,
-                                navigateToLogin = {
-                                    navController.popBackStack(
-                                        "LoginScreen",
-                                        false
-                                    )
-                                })
+                                navigateToLogin = {})
                             Image(painter = rememberAsyncImagePainter(state.value.image),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
@@ -369,23 +354,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                                         launcher.launch(imageUtils.getIntent())
                                     }
                             )
-//                            Image(
-//                                bitmap = imageBitmap,
-//                                contentDescription = "",
-//                                contentScale = ContentScale.Crop,
-//                                modifier = Modifier
-//                                    .clip(CircleShape)
-//                                    .size(100.dp)
-//                                    .background(Color.Gray)
-//                                    .border(
-//                                        width = 1.dp,
-//                                        color = Color.Black,
-//                                        shape = CircleShape
-//                                    )
-//                                    .clickable {
-//                                        launcher.launch(imageUtils.getIntent())
-//                                    }
-//                            )
                         }
                     }
                 }
@@ -402,7 +370,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.RegisterButtonClicked,
                             context,
-                            navigateToLogin = { navController.popBackStack("LoginScreen", false) })
+                            navigateToLogin = { })
                     },
                     modifier = Modifier
                         .fillMaxWidth()

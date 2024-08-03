@@ -3,14 +3,10 @@ package com.example.rmas.database
 import com.example.rmas.data.Like
 import com.example.rmas.data.Location
 import com.example.rmas.data.User
-import com.example.rmas.presentation.filter.FilterUIState
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.toObject
 
 object Firebase {
     fun getLocations(listener: (List<Location>) -> Unit) {

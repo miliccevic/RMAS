@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -71,6 +72,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -466,24 +468,23 @@ fun SecondBottomSheet(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
-                            .clickable { /*TODO ruzno*/
+                            .clickable {
                                 filterViewModel.onEvent(FilterUIEvent.UsersChanged(user.id))
                             },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = user.username, fontSize = 18.sp)
+                        Text(
+                            text = user.username,
+                            fontSize = 18.sp,
+                            modifier = Modifier.padding(15.dp)
+                        )
                         Spacer(modifier = Modifier.weight(1f))
-//                        Checkbox(checked = user.username in selectedUsers,
-//                            onCheckedChange = {
-//                                if(user.username in selectedUsers)
-//                                    selectedUsers.remove(user.username)
-//                                else
-//                                    selectedUsers.add(user.username)
-//                            }
-//                        )
-                        if (user.id in state.value.users) { /*TODO*/
-                            Icon(imageVector = Icons.Default.Check, contentDescription = null)
+                        if (user.id in state.value.users) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.padding(15.dp)
+                            )
                         }
                     }
                 }

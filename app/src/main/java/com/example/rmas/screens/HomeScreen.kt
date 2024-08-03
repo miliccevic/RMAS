@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -110,10 +111,10 @@ fun HomeScreen(
 ) {
     val filterScrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState()
-    var isSheetOpen = rememberSaveable { mutableStateOf(false) }
+    val isSheetOpen = rememberSaveable { mutableStateOf(false) }
 
     val bottomSheetState = rememberModalBottomSheetState()
-    var isBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
+    val isBottomSheetOpen = rememberSaveable { mutableStateOf(false) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -125,7 +126,7 @@ fun HomeScreen(
         mutableIntStateOf(1)
     }
 
-    var userLocation by remember { mutableStateOf(UserLocation.location) }
+    val userLocation by remember { mutableStateOf(UserLocation.location) }
     var locations by remember { mutableStateOf(emptyList<Location>()) }
     var locationsCopy by remember { mutableStateOf(emptyList<Location>()) }
     Firebase.getLocations {
@@ -153,16 +154,16 @@ fun HomeScreen(
         }
     }
 
-    var deviceLatLng by remember {
+    val deviceLatLng by remember {
         mutableStateOf(LatLng(43.32, 21.89))
     }
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(deviceLatLng, 15f)
     }
-    var uiSettings by remember {
+    val uiSettings by remember {
         mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
     }
-    var properties by remember {
+    val properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.TERRAIN))
     }
 
@@ -262,184 +263,189 @@ fun HomeScreen(
     ModalNavigationDrawer(
         gesturesEnabled = false,
         drawerContent = {
-            ModalDrawerSheet {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(model = img),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .size(70.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "$ime $prezime", style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = email, style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                NavigationDrawerItem(
-                    label = { Text(text = "Mapa") },
-                    selected = selectedIndex == 1,
-                    onClick = {
-                        selectedIndex = 1
-                        navLabel = "Mapa"
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.Map,
-                            contentDescription = null,
-                            tint = Color.Black
-                        )
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text(text = "Rang lista") },
-                    selected = selectedIndex == 2,
-                    onClick = {
-                        selectedIndex = 2
-                        navLabel = "Rang lista"
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = null,
-                            tint = Color.Black
-                        )
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text(text = "Lista objekata") },
-                    selected = selectedIndex == 3,
-                    onClick = {
-                        selectedIndex = 3
-                        navLabel = "Lista objekata"
-                        scope.launch {
-                            drawerState.close()
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = null,
-                            tint = Color.Black
-                        )
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                HorizontalDivider(modifier = Modifier.padding(5.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(NavigationDrawerItemDefaults.ItemPadding),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(start = 18.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.AddAlert,
-                            contentDescription = "",
-                            tint = Color.Black
-                        )
-                        Text(text = "Servis", fontSize = 14.sp)
-                    }
-                    Switch(checked = checked,
-                        onCheckedChange = {
-                            if (ActivityCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION
-                                ) != PackageManager.PERMISSION_GRANTED
+                ModalDrawerSheet {
+                    LazyColumn {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
                             ) {
-                                Toast.makeText(
-                                    context,
-                                    "Potrebno je da uključite lokaciju kako biste mogli da aktivirate servis.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                checked = it
-                                if (it) {
-                                    Intent(context, LocationService::class.java).apply {
-                                        action = LocationService.ACTION_START_NEARBY
-                                        context.startForegroundService(this)
-                                    }
-                                    with(sharedPreferences.edit()) {
-                                        putBoolean("location_tracking", true)
-                                        apply()
-                                    }
-                                } else {
-                                    Intent(context, LocationService::class.java).apply {
-                                        action = LocationService.ACTION_STOP
-                                        context.stopService(this)
-                                    }
-                                    Intent(context, LocationService::class.java).apply {
-                                        action = LocationService.ACTION_START
-                                        context.startForegroundService(this)
-                                    }
-                                    with(sharedPreferences.edit()) {
-                                        putBoolean("location_tracking", false)
-                                        apply()
-                                    }
-                                }
-                            }
-                        },
-                        thumbContent = if (checked) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
+                                Image(
+                                    painter = rememberAsyncImagePainter(model = img),
                                     contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .size(70.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "$ime $prezime",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = email, style = MaterialTheme.typography.bodySmall
                                 )
                             }
-                        } else {
-                            null
-                        }
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                NavigationDrawerItem(
-                    label = { Text(text = "Odjavi se") },
-                    selected = false,
-                    onClick = {
-                        loginViewModel.logOut(context, navigateToLogin = {
-                            if (startDestination == "HomeScreen") { /*TODO*/
-                                navController.navigate("LoginScreen")
-                            } else {
-                                navController.popBackStack("LoginScreen", false)
+                            NavigationDrawerItem(
+                                label = { Text(text = "Mapa") },
+                                selected = selectedIndex == 1,
+                                onClick = {
+                                    selectedIndex = 1
+                                    navLabel = "Mapa"
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Map,
+                                        contentDescription = null,
+                                        tint = Color.Black
+                                    )
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                label = { Text(text = "Rang lista") },
+                                selected = selectedIndex == 2,
+                                onClick = {
+                                    selectedIndex = 2
+                                    navLabel = "Rang lista"
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.List,
+                                        contentDescription = null,
+                                        tint = Color.Black
+                                    )
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                label = { Text(text = "Lista objekata") },
+                                selected = selectedIndex == 3,
+                                onClick = {
+                                    selectedIndex = 3
+                                    navLabel = "Lista objekata"
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocationOn,
+                                        contentDescription = null,
+                                        tint = Color.Black
+                                    )
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(5.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(NavigationDrawerItemDefaults.ItemPadding),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.padding(start = 18.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.AddAlert,
+                                        contentDescription = "",
+                                        tint = Color.Black
+                                    )
+                                    Text(text = "Servis", fontSize = 14.sp)
+                                }
+                                Switch(checked = checked,
+                                    onCheckedChange = {
+                                        if (ActivityCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.ACCESS_FINE_LOCATION
+                                            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                                                context,
+                                                Manifest.permission.ACCESS_COARSE_LOCATION
+                                            ) != PackageManager.PERMISSION_GRANTED
+                                        ) {
+                                            Toast.makeText(
+                                                context,
+                                                "Potrebno je da uključite lokaciju kako biste mogli da aktivirate servis.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } else {
+                                            checked = it
+                                            if (it) {
+                                                Intent(context, LocationService::class.java).apply {
+                                                    action = LocationService.ACTION_START_NEARBY
+                                                    context.startForegroundService(this)
+                                                }
+                                                with(sharedPreferences.edit()) {
+                                                    putBoolean("location_tracking", true)
+                                                    apply()
+                                                }
+                                            } else {
+                                                Intent(context, LocationService::class.java).apply {
+                                                    action = LocationService.ACTION_STOP
+                                                    context.stopService(this)
+                                                }
+                                                Intent(context, LocationService::class.java).apply {
+                                                    action = LocationService.ACTION_START
+                                                    context.startForegroundService(this)
+                                                }
+                                                with(sharedPreferences.edit()) {
+                                                    putBoolean("location_tracking", false)
+                                                    apply()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    thumbContent = if (checked) {
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Filled.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(SwitchDefaults.IconSize),
+                                            )
+                                        }
+                                    } else {
+                                        null
+                                    }
+                                )
                             }
-                        })
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "Logout",
-                            tint = Color.Black
-                        )
-                    },
-                    modifier = Modifier
-                        .padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
+                            Spacer(modifier = Modifier.weight(1f))
+                            NavigationDrawerItem(
+                                label = { Text(text = "Odjavi se") },
+                                selected = false,
+                                onClick = {
+                                    loginViewModel.logOut(context, navigateToLogin = {
+                                        if (startDestination == "HomeScreen") { /*TODO*/
+                                            navController.navigate("LoginScreen")
+                                        } else {
+                                            navController.popBackStack("LoginScreen", false)
+                                        }
+                                    })
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                                        contentDescription = "Logout",
+                                        tint = Color.Black
+                                    )
+                                },
+                                modifier = Modifier
+                                    .padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                        }
+                    }
             }
         }, drawerState = drawerState
     ) {
@@ -494,53 +500,56 @@ fun HomeScreen(
                     .background(Color.White)/*TODO padding top manje*/
                     .padding(values)
             ) {
-                /*TODO*/
-                if (selectedIndex == 1) {
-                    Box(modifier = Modifier) {
-                        GoogleMap(modifier = Modifier.fillMaxSize(),
-                            cameraPositionState = cameraPositionState,
-                            properties = properties,
-                            uiSettings = uiSettings,
-                            onMapClick = {}) {
-                            if (userLocation.value != null) {
-                                cameraPositionState.move(
-                                    CameraUpdateFactory.newLatLng(
-                                        LatLng(
-                                            userLocation.value!!.latitude,
-                                            userLocation.value!!.longitude
-                                        )
-                                    )
-                                )
-                                Marker(
-                                    state = MarkerState(
-                                        position = LatLng(
-                                            userLocation.value!!.latitude,
-                                            userLocation.value!!.longitude
-                                        )
-                                    )
-                                )
-                            }
-                            locations.let { locations ->
-                                for (marker in locations)
-                                    Marker(
-                                        onClick = {
-                                            isBottomSheetOpen.value = true
-                                            clickedLocation.value = marker
-                                            false
-                                        },
-                                        state = MarkerState(
-                                            position = LatLng(
-                                                marker.location.latitude, marker.location.longitude
+                when (selectedIndex) {
+                    1 -> {
+                        Box(modifier = Modifier) {
+                            GoogleMap(modifier = Modifier.fillMaxSize(),
+                                cameraPositionState = cameraPositionState,
+                                properties = properties,
+                                uiSettings = uiSettings,
+                                onMapClick = {}) {
+                                if (userLocation.value != null) {
+                                    cameraPositionState.move(
+                                        CameraUpdateFactory.newLatLng(
+                                            LatLng(
+                                                userLocation.value!!.latitude,
+                                                userLocation.value!!.longitude
                                             )
                                         )
                                     )
+                                    Marker(
+                                        state = MarkerState(
+                                            position = LatLng(
+                                                userLocation.value!!.latitude,
+                                                userLocation.value!!.longitude
+                                            )
+                                        )
+                                    )
+                                }
+                                locations.let { locations ->
+                                    for (marker in locations)
+                                        Marker(
+                                            onClick = {
+                                                isBottomSheetOpen.value = true
+                                                clickedLocation.value = marker
+                                                false
+                                            },
+                                            state = MarkerState(
+                                                position = LatLng(
+                                                    marker.location.latitude, marker.location.longitude
+                                                )
+                                            )
+                                        )
+                                }
                             }
                         }
                     }
-                } else if (selectedIndex == 2) {
-                    LeaderboardScreen()
-                } else {
-                    LocationScreen()
+                    2 -> {
+                        LeaderboardScreen()
+                    }
+                    else -> {
+                        LocationScreen()
+                    }
                 }
                 if (isSheetOpen.value) {
                     BottomSheet(

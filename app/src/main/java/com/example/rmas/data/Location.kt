@@ -15,7 +15,7 @@ data class Location(
     var image: String = "",
     var date: Timestamp = Timestamp(Date())
 ) {
-    fun doesMatchSearchQuery(query: String): Boolean { /*TODO*/
+    fun doesMatchSearchQuery(query: String): Boolean {
         val words = query
             .replace(Regex(""""(.?(\\")?)*?""""), "")
             .split(Regex("\\s+")).toSet()

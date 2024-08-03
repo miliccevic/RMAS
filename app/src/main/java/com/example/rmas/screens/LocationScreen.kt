@@ -67,14 +67,14 @@ fun LocationScreen() {
             Card(
                 onClick = {
                     isSheetOpen.value = true
-                    clickedLocation.value=location
+                    clickedLocation.value = location
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, end = 8.dp, top = 8.dp),
+                    .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                 border = BorderStroke(0.5.dp, Color.Gray),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White /*TODO*/
+                    containerColor = Color.White
                 )
             ) {
                 Row(
@@ -90,27 +90,26 @@ fun LocationScreen() {
                             .width(130.dp)
                             .clip(RoundedCornerShape(8.dp))
                     )
-                    Column(
-                        modifier = Modifier
-                            .padding(10.dp)
-                    ) {
+                    Column {
                         Text(
                             text = location.title,
                             color = Color.Black,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(top=10.dp, start = 10.dp, end=10.dp, bottom = 0.dp)
                         )
                         Text(
                             text = location.description,
                             color = Color.Black.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start=10.dp, end=10.dp) /*TODO 2 linije ako nema*/
                         )
                         if (location.userId != userId) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.BottomEnd /*TODO na kraj*/
+                                contentAlignment = Alignment.BottomEnd
                             ) {
                                 IconToggleButton(
                                     checked = favorites.any {
@@ -150,8 +149,8 @@ fun LocationScreen() {
             }
         }
     }
-    if(isSheetOpen.value){
-        LocationBottomSheet(sheetState,isSheetOpen, clickedLocation.value)
+    if (isSheetOpen.value) {
+        LocationBottomSheet(sheetState, isSheetOpen, clickedLocation.value)
     }
 }
 

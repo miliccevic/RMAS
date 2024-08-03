@@ -17,7 +17,6 @@ import com.example.rmas.screens.LeaderboardScreen
 import com.example.rmas.screens.LocationScreen
 import com.example.rmas.screens.SingUpScreen
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 
 
 @RequiresApi(Build.VERSION_CODES.O)

@@ -50,7 +50,7 @@ class LoginViewModel : ViewModel() {
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     if(!it.result.isEmpty) {
-                        var email = it.result.documents[0].get("email").toString()
+                        val email = it.result.documents[0].get("email").toString()
                         FirebaseAuth
                             .getInstance()
                             .signInWithEmailAndPassword(

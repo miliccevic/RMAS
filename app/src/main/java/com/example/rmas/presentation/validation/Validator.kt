@@ -32,7 +32,7 @@ object Validator {
         if(password.isNotEmpty() && isValidPassword(password))
             return ValidationResult(true)
         else
-            return ValidationResult(false,"Šifra mora imati 8 karaktera, jedan broj, jedan specijalan karakter i jedno veliko slovo.")
+            return ValidationResult(false,"Šifra mora imati šest karaktera, jedan broj, jedan specijalan karakter i jedno veliko slovo.")
     }
 
     fun validateUsername(username: String): ValidationResult {
@@ -75,9 +75,9 @@ object Validator {
             return ValidationResult(false,"Opis ne sme biti prazan.")
     }
 
-    private fun isValidPassword(password: String): Boolean { //Password must contain minimum 8 characters at least 1 Uppercase, 1 Number and 1 Special Character
+    private fun isValidPassword(password: String): Boolean {
         val pattern: Pattern
-        val PASSWORD_PATTERN = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$"
+        val PASSWORD_PATTERN = "^(?=.*[0-9])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{6,}$"
         pattern = Pattern.compile(PASSWORD_PATTERN)
         val matcher: Matcher = pattern.matcher(password)
         return matcher.matches()
