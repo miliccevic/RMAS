@@ -30,6 +30,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -82,12 +84,9 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val state = markerViewModel.markerUIState.collectAsState()
-//    val imgUrl = remember { mutableStateOf(Uri.EMPTY) }
 
     val imageUtils = ImageUtils(context)
-
     var currentPhoto by rememberSaveable { mutableStateOf<String?>(null) }
-//    var bitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -107,9 +106,11 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
     ) { _: Boolean ->
         launcher.launch(imageUtils.getIntent())
     }
+
     val options =
         listOf("Rupa na putu", "Rad na putu", "Saobraćajna nezgoda", "Zatvorena ulica", "Ostalo")
     var expanded = rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,11 +118,10 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.LightGray,
                 ),
-                /*TODO ruzna boja*/
                 modifier = Modifier
                     .fillMaxWidth(),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack("HomeScreen", false) }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -147,6 +147,68 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (currentPhoto == null) {
+                    Box(
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                            contentDescription = "",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .size(70.dp)
+                                .clickable {
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.CAMERA
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                    } else {
+                                        launcher.launch(imageUtils.getIntent())
+                                    }
+                                }
+                        )
+                    }
+                } else {
+                    val uri = Uri.fromFile(File(currentPhoto))
+                    markerViewModel.onEvent(
+                        MarkerUIEvent.ImageChanged(uri),
+                        context,
+                        onClick = {})
+                    Image(
+                        painter = rememberAsyncImagePainter(model = state.value.image),
+                        contentDescription = "",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(90.dp)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                launcher.launch(imageUtils.getIntent())
+                            }
+                    )
+                }
+                if (state.value.imageError != null) {
+                    Text(
+                        text = state.value.imageError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -241,81 +303,12 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                Box(
-                    modifier = Modifier
-                        .height(100.dp)
-                ) {/*TODO*/
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 10.dp)
-                    ) {
-                        if (currentPhoto == null) {
-                            Image(
-                                painter = painterResource(id = R.drawable.baseline_photo_camera_24),
-                                contentDescription = "",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(100.dp)
-                                    .background(Color.Gray)
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color.Black,
-                                        shape = CircleShape
-                                    )
-                                    .clickable {
-                                        if (ContextCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.CAMERA
-                                            ) != PackageManager.PERMISSION_GRANTED
-                                        ) {
-                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                        } else {
-                                            launcher.launch(imageUtils.getIntent())
-                                        }
-                                    }
-                            )
-                        } else {
-                            val uri = Uri.fromFile(File(currentPhoto))
-                            markerViewModel.onEvent(
-                                MarkerUIEvent.ImageChanged(uri),
-                                context,
-                                onClick = {})
-                            Image(
-                                painter = rememberAsyncImagePainter(model = state.value.image),
-                                contentDescription = "",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(100.dp)
-                                    .background(Color.Gray)
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color.Black,
-                                        shape = CircleShape
-                                    )
-                                    .clickable {
-                                        launcher.launch(imageUtils.getIntent())
-                                    }
-                            )
-                        }
-                    }
-                }
-                if (state.value.imageError != null) { /*TODO*/
-                    Text(
-                        text = state.value.imageError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 Button(
                     onClick = {
                         markerViewModel.onEvent(
                             MarkerUIEvent.AddMarkerClicked,
                             context,
-                            onClick = { navController.popBackStack("HomeScreen", false) })
+                            onClick = { navController.navigateUp() })
                     },
                     modifier = Modifier
                         .fillMaxWidth()

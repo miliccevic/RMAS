@@ -2,8 +2,6 @@ package com.example.rmas.components
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.appcompat.view.menu.ListMenuItemView
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,32 +15,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DateRangePickerState
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,23 +54,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.data.User
 import com.example.rmas.database.Firebase
 import com.example.rmas.presentation.filter.FilterUIEvent
@@ -212,7 +198,7 @@ fun calcFraction(a: Float, b: Float, pos: Float) =
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateRangePicker(
+fun DatePicker(
     isPickerVisible: MutableState<Boolean>,
     dateRangePickerState: DateRangePickerState,
     filterViewModel: FilterViewModel,
@@ -304,7 +290,7 @@ fun DateRangePicker(
                                 }
                             }
                         }
-                        androidx.compose.material3.DateRangePicker(state = dateRangePickerState)
+                        DateRangePicker(state = dateRangePickerState)
                         if (dateRangePickerState.displayMode != DisplayMode.Picker) {
                             Row(modifier = Modifier.align(Alignment.End)) {
                                 TextButton(onClick = {
@@ -358,8 +344,7 @@ fun FilterBottomSheet(
     filterScrollState: ScrollState,
     filterViewModel: FilterViewModel,
     state: State<FilterUIState>,
-    showSecondSheet: MutableState<Boolean>,
-    filterButtonClicked: () -> Unit
+    showSecondSheet: MutableState<Boolean>
 ) {
     Column(
         modifier = Modifier
@@ -377,7 +362,10 @@ fun FilterBottomSheet(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             ) /*TODO*/
-            TextButton(onClick = { filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked) }) {
+            TextButton(onClick = {
+                filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked)
+                sliderPosition.value = 0f
+            }) {
                 Text("Resetuj")
             }
         }
@@ -387,46 +375,37 @@ fun FilterBottomSheet(
                 .padding(16.dp)
                 .verticalScroll(filterScrollState)
         ) {
-            Text(text = "Rastojanje") /*TODO*/
-            DistanceSlider(sliderPosition, 0f..999f, filterViewModel)
+            Text(text = "Naziv", style = MaterialTheme.typography.titleMedium)
+            SearchBar(state, filterViewModel)
             HorizontalDivider(thickness = 1.dp)
-            Text("Tip")
-            FilterChips(state, filterViewModel)
-            HorizontalDivider(thickness = 1.dp)
-            Text(text = "Datum")
-            DateRangePicker(
+            Text(text = "Datum", style = MaterialTheme.typography.titleMedium)
+            DatePicker(
                 isPickerVisible,
                 dateRangePickerState,
                 filterViewModel,
                 state
             )
             HorizontalDivider(thickness = 1.dp)
-            Text("Korisnici")
+            Text(text = "Rastojanje", style = MaterialTheme.typography.titleMedium) /*TODO*/
+            DistanceSlider(sliderPosition, 0f..999f, filterViewModel)
+            HorizontalDivider(thickness = 1.dp)
+            Text("Tip", style = MaterialTheme.typography.titleMedium)
+            FilterChips(state, filterViewModel)
+            HorizontalDivider(thickness = 1.dp)
+            Text("Korisnici", style = MaterialTheme.typography.titleMedium)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Korisnici", modifier = Modifier.weight(1f))
+                Text("Izaberite korisnike", modifier = Modifier.weight(1f))
                 IconButton(onClick = { showSecondSheet.value = true }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null
                     )
                 }
-            }
-            Text(text = "Naziv i opis")
-            SearchBar(state, filterViewModel)
-            Button(
-                onClick = {
-                    filterButtonClicked.invoke()
-                    isSheetOpen.value = false
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Text(text = "Potvrdi")
             }
         }
     }
@@ -506,8 +485,7 @@ fun BottomSheet(
     filterScrollState: ScrollState,
     showSecondSheet: MutableState<Boolean>,
     filterViewModel: FilterViewModel,
-    state: State<FilterUIState>,
-    filterButtonClicked: () -> Unit
+    state: State<FilterUIState>
 ) {
     ModalBottomSheet(
         onDismissRequest = {
@@ -525,8 +503,7 @@ fun BottomSheet(
                 filterScrollState = filterScrollState,
                 filterViewModel = filterViewModel,
                 state = state,
-                showSecondSheet = showSecondSheet,
-                filterButtonClicked = { filterButtonClicked() }
+                showSecondSheet = showSecondSheet
             )
         } else {
             SecondBottomSheet(

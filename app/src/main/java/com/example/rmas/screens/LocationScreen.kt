@@ -53,11 +53,6 @@ fun LocationScreen() {
     Firebase.getLocations {
         locations = it
     }
-    val userId = FirebaseAuth.getInstance().currentUser!!.uid
-    var favorites by remember { mutableStateOf(emptyList<Like>()) }
-    Firebase.userLikes(userId) {
-        favorites = it
-    }
     val sheetState = rememberModalBottomSheetState()
     var isSheetOpen = rememberSaveable { mutableStateOf(false) }
     val clickedLocation = remember { mutableStateOf(Location()) }
@@ -104,46 +99,8 @@ fun LocationScreen() {
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start=10.dp, end=10.dp) /*TODO 2 linije ako nema*/
+                            modifier = Modifier.padding(start=10.dp, end=10.dp)
                         )
-                        if (location.userId != userId) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.BottomEnd
-                            ) {
-                                IconToggleButton(
-                                    checked = favorites.any {
-                                        it.locationId == location.id
-                                    },
-                                    onCheckedChange = {
-                                        if (favorites.any {
-                                                it.locationId == location.id
-                                            }) {
-                                            Firebase.removeLikeFromDb(userId, location.id)
-                                        } else {
-                                            Firebase.addLikeToDb(userId, location.id)
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        tint = Color(0xffE91E63),
-                                        modifier = Modifier
-                                            .graphicsLayer {
-                                                scaleX = 1.3f
-                                                scaleY = 1.3f
-                                            },
-                                        imageVector = if (favorites.any {
-                                                it.locationId == location.id
-                                            }) {
-                                            Icons.Filled.Favorite
-                                        } else {
-                                            Icons.Default.FavoriteBorder
-                                        },
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }

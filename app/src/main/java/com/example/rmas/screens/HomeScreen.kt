@@ -1,11 +1,13 @@
 package com.example.rmas.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import  android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AddAlert
 import androidx.compose.material.icons.filled.AddLocation
+import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
@@ -91,8 +94,10 @@ import com.example.rmas.viewmodels.FilterViewModel
 import com.google.firebase.Timestamp
 import java.util.Date
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -127,12 +132,14 @@ fun HomeScreen(
     }
 
     val userLocation by remember { mutableStateOf(UserLocation.location) }
+
     var locations by remember { mutableStateOf(emptyList<Location>()) }
     var locationsCopy by remember { mutableStateOf(emptyList<Location>()) }
     Firebase.getLocations {
         locations = it
         locationsCopy = locations
     }
+
     var ime by remember {
         mutableStateOf("")
     }
@@ -145,12 +152,14 @@ fun HomeScreen(
     var img by remember {
         mutableStateOf("")
     }
-    Firebase.getUser(FirebaseAuth.getInstance().currentUser!!.uid) {
-        if (it != null) {
-            ime = it.ime
-            prezime = it.prezime
-            email = it.email
-            img = it.image
+    if (FirebaseAuth.getInstance().currentUser != null) {
+        Firebase.getUser(FirebaseAuth.getInstance().currentUser!!.uid) {
+            if (it != null) {
+                ime = it.ime
+                prezime = it.prezime
+                email = it.email
+                img = it.image
+            }
         }
     }
 
@@ -177,46 +186,45 @@ fun HomeScreen(
     val showSecondSheet = rememberSaveable { mutableStateOf(false) }
     val clickedLocation = remember { mutableStateOf(Location()) }
 
-    fun filterButtonClickedFun() {
-        if (userLocation.value != null) {
-            locations = locationsCopy
-            if (state.value.types.isNotEmpty()) {
-                locations = locations.filter {
-                    it.type in state.value.types
-                }
+    if (userLocation.value != null) {
+        locations = locationsCopy
+        if (state.value.types.isNotEmpty()) {
+            locations = locations.filter {
+                it.type in state.value.types
             }
-            if (state.value.users.isNotEmpty()) {
-                locations = locations.filter {
-                    it.userId in state.value.users
-                }
+        }
+        if (state.value.users.isNotEmpty()) {
+            locations = locations.filter {
+                it.userId in state.value.users
             }
-            if (state.value.distance != null) {
-                locations = locations.filter {
-                    val startLatLng = LatLng(it.location.latitude, it.location.longitude)
-                    val endLatLng =
-                        LatLng(userLocation.value!!.latitude, userLocation.value!!.longitude)
-                    SphericalUtil.computeDistanceBetween(
-                        startLatLng,
-                        endLatLng
-                    ) <= state.value.distance!! * 1000
-                }
+        }
+        if (state.value.distance != null) {
+            locations = locations.filter {
+                val startLatLng = LatLng(it.location.latitude, it.location.longitude)
+                val endLatLng =
+                    LatLng(userLocation.value!!.latitude, userLocation.value!!.longitude)
+                SphericalUtil.computeDistanceBetween(
+                    startLatLng,
+                    endLatLng
+                ) <= state.value.distance!! * 1000
             }
-            if (state.value.startDate != null && state.value.endDate != null) {
-                locations = locations.filter {
-                    it.date >= Timestamp(Date(state.value.startDate!!)) && it.date <= Timestamp(
-                        Date(
-                            state.value.endDate!!
-                        )
+        }
+        if (state.value.startDate != null && state.value.endDate != null) {
+            locations = locations.filter {
+                it.date >= Timestamp(Date(state.value.startDate!!)) && it.date <= Timestamp(
+                    Date(
+                        state.value.endDate!!
                     )
-                }
+                )
             }
-            if (state.value.searchText != "") {
-                locations = locations.filter {
-                    it.doesMatchSearchQuery(state.value.searchText)
-                }
+        }
+        if (state.value.searchText != "") {
+            locations = locations.filter {
+                it.doesMatchSearchQuery(state.value.searchText)
             }
         }
     }
+
 
     val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     val isTrackingServiceEnabled by rememberSaveable {
@@ -263,189 +271,188 @@ fun HomeScreen(
     ModalNavigationDrawer(
         gesturesEnabled = false,
         drawerContent = {
-                ModalDrawerSheet {
-                    LazyColumn {
-                        item {
-                            Column(
+            ModalDrawerSheet {
+                LazyColumn {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(model = img),
+                                contentDescription = null,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(model = img),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .size(70.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "$ime $prezime",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = email, style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            NavigationDrawerItem(
-                                label = { Text(text = "Mapa") },
-                                selected = selectedIndex == 1,
-                                onClick = {
-                                    selectedIndex = 1
-                                    navLabel = "Mapa"
-                                    scope.launch {
-                                        drawerState.close()
-                                    }
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.Map,
-                                        contentDescription = null,
-                                        tint = Color.Black
-                                    )
-                                },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    .padding(4.dp)
+                                    .size(70.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
                             )
-                            NavigationDrawerItem(
-                                label = { Text(text = "Rang lista") },
-                                selected = selectedIndex == 2,
-                                onClick = {
-                                    selectedIndex = 2
-                                    navLabel = "Rang lista"
-                                    scope.launch {
-                                        drawerState.close()
-                                    }
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.List,
-                                        contentDescription = null,
-                                        tint = Color.Black
-                                    )
-                                },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "$ime $prezime",
+                                style = MaterialTheme.typography.titleMedium
                             )
-                            NavigationDrawerItem(
-                                label = { Text(text = "Lista objekata") },
-                                selected = selectedIndex == 3,
-                                onClick = {
-                                    selectedIndex = 3
-                                    navLabel = "Lista objekata"
-                                    scope.launch {
-                                        drawerState.close()
-                                    }
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.LocationOn,
-                                        contentDescription = null,
-                                        tint = Color.Black
-                                    )
-                                },
-                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                            )
-                            HorizontalDivider(modifier = Modifier.padding(5.dp))
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(NavigationDrawerItemDefaults.ItemPadding),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    modifier = Modifier.padding(start = 18.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.AddAlert,
-                                        contentDescription = "",
-                                        tint = Color.Black
-                                    )
-                                    Text(text = "Servis", fontSize = 14.sp)
-                                }
-                                Switch(checked = checked,
-                                    onCheckedChange = {
-                                        if (ActivityCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.ACCESS_FINE_LOCATION
-                                            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.ACCESS_COARSE_LOCATION
-                                            ) != PackageManager.PERMISSION_GRANTED
-                                        ) {
-                                            Toast.makeText(
-                                                context,
-                                                "Potrebno je da uključite lokaciju kako biste mogli da aktivirate servis.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } else {
-                                            checked = it
-                                            if (it) {
-                                                Intent(context, LocationService::class.java).apply {
-                                                    action = LocationService.ACTION_START_NEARBY
-                                                    context.startForegroundService(this)
-                                                }
-                                                with(sharedPreferences.edit()) {
-                                                    putBoolean("location_tracking", true)
-                                                    apply()
-                                                }
-                                            } else {
-                                                Intent(context, LocationService::class.java).apply {
-                                                    action = LocationService.ACTION_STOP
-                                                    context.stopService(this)
-                                                }
-                                                Intent(context, LocationService::class.java).apply {
-                                                    action = LocationService.ACTION_START
-                                                    context.startForegroundService(this)
-                                                }
-                                                with(sharedPreferences.edit()) {
-                                                    putBoolean("location_tracking", false)
-                                                    apply()
-                                                }
-                                            }
-                                        }
-                                    },
-                                    thumbContent = if (checked) {
-                                        {
-                                            Icon(
-                                                imageVector = Icons.Filled.Check,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(SwitchDefaults.IconSize),
-                                            )
-                                        }
-                                    } else {
-                                        null
-                                    }
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            NavigationDrawerItem(
-                                label = { Text(text = "Odjavi se") },
-                                selected = false,
-                                onClick = {
-                                    loginViewModel.logOut(context, navigateToLogin = {
-                                        if (startDestination == "HomeScreen") { /*TODO*/
-                                            navController.navigate("LoginScreen")
-                                        } else {
-                                            navController.popBackStack("LoginScreen", false)
-                                        }
-                                    })
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                                        contentDescription = "Logout",
-                                        tint = Color.Black
-                                    )
-                                },
-                                modifier = Modifier
-                                    .padding(NavigationDrawerItemDefaults.ItemPadding)
+                            Text(
+                                text = email, style = MaterialTheme.typography.bodySmall
                             )
                         }
+                        NavigationDrawerItem(
+                            label = { Text(text = "Mapa") },
+                            selected = selectedIndex == 1,
+                            onClick = {
+                                selectedIndex = 1
+                                navLabel = "Mapa"
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Map,
+                                    contentDescription = null,
+                                    tint = Color.Black
+                                )
+                            },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text(text = "Rang lista") },
+                            selected = selectedIndex == 2,
+                            onClick = {
+                                selectedIndex = 2
+                                navLabel = "Rang lista"
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Equalizer,
+                                    contentDescription = null,
+                                    tint = Color.Black
+                                )
+                            },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        NavigationDrawerItem(
+                            label = { Text(text = "Lista objekata") },
+                            selected = selectedIndex == 3,
+                            onClick = {
+                                selectedIndex = 3
+                                navLabel = "Lista objekata"
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Filled.LocationOn,
+                                    contentDescription = null,
+                                    tint = Color.Black
+                                )
+                            },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(5.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(NavigationDrawerItemDefaults.ItemPadding),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.padding(start = 17.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.AddAlert,
+                                    contentDescription = "",
+                                    tint = Color.Black
+                                )
+                                Text(text = "Servis", fontSize = 14.sp)
+                            }
+                            Switch(checked = checked,
+                                onCheckedChange = {
+                                    if (ActivityCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        Toast.makeText(
+                                            context,
+                                            "Potrebno je da uključite lokaciju kako biste mogli da aktivirate servis.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        checked = it
+                                        if (it) {
+                                            Intent(context, LocationService::class.java).apply {
+                                                action = LocationService.ACTION_START_NEARBY
+                                                context.startForegroundService(this)
+                                            }
+                                            with(sharedPreferences.edit()) {
+                                                putBoolean("location_tracking", true)
+                                                apply()
+                                            }
+                                        } else {
+                                            Intent(context, LocationService::class.java).apply {
+                                                action = LocationService.ACTION_STOP
+                                                context.stopService(this)
+                                            }
+                                            Intent(context, LocationService::class.java).apply {
+                                                action = LocationService.ACTION_START
+                                                context.startForegroundService(this)
+                                            }
+                                            with(sharedPreferences.edit()) {
+                                                putBoolean("location_tracking", false)
+                                                apply()
+                                            }
+                                        }
+                                    }
+                                },
+                                thumbContent = if (checked) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Filled.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                                        )
+                                    }
+                                } else {
+                                    null
+                                }
+                            )
+                        }
+                        NavigationDrawerItem(
+                            label = { Text(text = "Odjavi se") },
+                            selected = false,
+                            onClick = {
+                                loginViewModel.logOut(context, navigateToLogin = {
+                                    if (startDestination == "HomeScreen") {
+                                        navController.navigate("LoginScreen") {
+                                            popUpTo("HomeScreen") { inclusive = true }
+                                        }
+                                    } else navController.navigateUp()
+                                })
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                                    contentDescription = "Logout",
+                                    tint = Color.Black
+                                )
+                            },
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
                     }
+                }
             }
         }, drawerState = drawerState
     ) {
@@ -453,7 +460,7 @@ fun HomeScreen(
             CenterAlignedTopAppBar(title = { Text(text = navLabel, color = Color.Black) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.LightGray,
-                ),/*TODO ruzna boja*/
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 navigationIcon = {
                     IconButton(onClick = {
@@ -488,7 +495,7 @@ fun HomeScreen(
                     onClick = { navController.navigate("AddMarkerScreen") },
                 ) {
                     Icon(
-                        Icons.Filled.AddLocation, contentDescription = ""
+                        Icons.Filled.AddLocationAlt, contentDescription = ""
                     )
                 }
             } else null
@@ -497,7 +504,7 @@ fun HomeScreen(
                 color = Color.White,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)/*TODO padding top manje*/
+                    .background(Color.White)
                     .padding(values)
             ) {
                 when (selectedIndex) {
@@ -536,7 +543,8 @@ fun HomeScreen(
                                             },
                                             state = MarkerState(
                                                 position = LatLng(
-                                                    marker.location.latitude, marker.location.longitude
+                                                    marker.location.latitude,
+                                                    marker.location.longitude
                                                 )
                                             )
                                         )
@@ -544,9 +552,11 @@ fun HomeScreen(
                             }
                         }
                     }
+
                     2 -> {
                         LeaderboardScreen()
                     }
+
                     else -> {
                         LocationScreen()
                     }
@@ -561,8 +571,7 @@ fun HomeScreen(
                         filterScrollState = filterScrollState,
                         showSecondSheet = showSecondSheet,
                         filterViewModel = filterViewModel,
-                        state = state,
-                        filterButtonClicked = { filterButtonClickedFun() }
+                        state = state
                     )
                 }
                 if (isBottomSheetOpen.value) {

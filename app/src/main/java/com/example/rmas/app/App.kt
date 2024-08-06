@@ -37,7 +37,7 @@ fun App(navController: NavHostController) {
                 SingUpScreen(navController)
             }
             composable("HomeScreen") {
-                HomeScreen(startDestination, navController)
+                HomeScreen(startDestination,navController)
             }
             composable("LeaderboardScreen") {
                 LeaderboardScreen()

@@ -62,23 +62,23 @@ class FilterViewModel : ViewModel() {
             }
 
             FilterUIEvent.ResetButtonClicked -> {
-                _filterUIState.value.users= emptyList()
-                _filterUIState.value.types= emptyList()
-                _filterUIState.value.endDate=null
-                _filterUIState.value.startDate=null
-                _filterUIState.value.distance=null
-                _filterUIState.value.datum="Izaberite opseg"
-                _filterUIState.value.searchText=""
+                _filterUIState.value.users = emptyList()
+                _filterUIState.value.types = emptyList()
+                _filterUIState.value.endDate = null
+                _filterUIState.value.startDate = null
+                _filterUIState.value.distance = null
+                _filterUIState.value.datum = "Izaberite opseg"
+                _filterUIState.value.searchText = ""
             }
 
             is FilterUIEvent.SearchTextChanged -> {
-                _filterUIState.value=_filterUIState.value.copy(
+                _filterUIState.value = _filterUIState.value.copy(
                     searchText = event.searchText
                 )
             }
 
             FilterUIEvent.ResetUsersClicked -> {
-                _filterUIState.value.users= emptyList()
+                _filterUIState.value.users = emptyList()
             }
         }
     }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,6 +68,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.R
+import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.viewmodels.SingUpViewModel
 import com.example.rmas.presentation.singup.SingUpUIEvent
 import com.example.rmas.utils.ImageUtils
@@ -112,7 +114,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 modifier = Modifier
                     .fillMaxWidth(),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack("LoginScreen", false) }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -139,7 +141,8 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(values)
-                    .verticalScroll(scrollState)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     modifier = Modifier
@@ -296,68 +299,62 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         textAlign = TextAlign.End
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .height(100.dp)
-                ) {/*TODO*/
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                if (currentPhoto == null) { /*TODO razmak*/
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 10.dp)
+                            .size(90.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        if (currentPhoto == null) {
-                            Image(
-                                painter = painterResource(id = R.drawable.baseline_photo_camera_24),
-                                contentDescription = "",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(100.dp)
-                                    .background(Color.Gray)
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color.Black,
-                                        shape = CircleShape
-                                    )
-                                    .clickable {
-                                        if (ContextCompat.checkSelfPermission(
-                                                context,
-                                                Manifest.permission.CAMERA
-                                            ) != PackageManager.PERMISSION_GRANTED
-                                        ) {
-                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                        } else {
-                                            launcher.launch(imageUtils.getIntent())
-                                        }
-                                    }
-                            )
-                        } else {
-                            val uri = Uri.fromFile(File(currentPhoto))
-                            singUpViewModel.onEvent(
-                                SingUpUIEvent.ImageChanged(uri),
-                                context,
-                                navigateToLogin = {})
-                            Image(painter = rememberAsyncImagePainter(state.value.image),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(100.dp)
-                                    .background(Color.Gray)
-                                    .border(
-                                        width = 1.dp,
-                                        color = Color.Black,
-                                        shape = CircleShape
-                                    )
-                                    .clickable {
+                        Image(
+                            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                            contentDescription = "",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .size(70.dp)
+                                .clickable {
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.CAMERA
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                    } else {
                                         launcher.launch(imageUtils.getIntent())
                                     }
-                            )
-                        }
+                                }
+                        )
                     }
+                } else {
+                    val uri = Uri.fromFile(File(currentPhoto))
+                    singUpViewModel.onEvent(
+                        SingUpUIEvent.ImageChanged(uri),
+                        context,
+                        navigateToLogin = {})
+                    Image(
+                        painter = rememberAsyncImagePainter(model = state.value.image),
+                        contentDescription = "",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(90.dp)
+                            .border(
+                                width = 1.dp,
+                                color = Color.Black,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                launcher.launch(imageUtils.getIntent())
+                            }
+                    )
                 }
-                if (state.value.imageError != null) { /*TODO*/
+                if (state.value.imageError != null) {
                     Text(
                         text = state.value.imageError!!,
                         color = MaterialTheme.colorScheme.error,
@@ -370,7 +367,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         singUpViewModel.onEvent(
                             SingUpUIEvent.RegisterButtonClicked,
                             context,
-                            navigateToLogin = { })
+                            navigateToLogin = { navController.navigateUp() })
                     },
                     modifier = Modifier
                         .fillMaxWidth()
