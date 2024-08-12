@@ -3,9 +3,7 @@ package com.example.rmas.screens
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -16,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,10 +29,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -42,7 +40,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,15 +49,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -75,7 +68,6 @@ import com.example.rmas.R
 import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.utils.ImageUtils
 import com.example.rmas.viewmodels.MarkerViewModel
-import com.google.firebase.auth.FirebaseAuth
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,14 +101,16 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
 
     val options =
         listOf("Rupa na putu", "Rad na putu", "Saobraćajna nezgoda", "Zatvorena ulica", "Ostalo")
-    var expanded = rememberSaveable { mutableStateOf(false) }
+    val expanded = rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Dodaj na mapu", color = Color.Black) },
+                title = { Text(text = "Dodaj na mapu") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.LightGray,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -124,8 +118,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.Black
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -133,10 +126,9 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
         }
     ) { values ->
         Surface(
-            color = Color.White,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(28.dp)
                 .verticalScroll(scrollState)
         ) {
@@ -154,7 +146,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .clip(CircleShape)
                             .border(
                                 width = 1.dp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -194,7 +186,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .size(90.dp)
                             .border(
                                 width = 1.dp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = CircleShape
                             )
                             .clickable {
@@ -206,7 +198,10 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     Text(
                         text = state.value.imageError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 12.dp),
+                        fontSize = 12.sp
                     )
                 }
                 OutlinedTextField(
@@ -222,18 +217,16 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     },
                     label = { Text(text = "Naslov") },
                     keyboardOptions = KeyboardOptions.Default,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        /*TODO*/
-                    ),
-                    isError = state.value.titleError != null
+                    isError = state.value.titleError != null,
+                    supportingText = {
+                        if (state.value.titleError != null) {
+                            Text(
+                                text = state.value.titleError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.titleError != null) {
-                    Text(
-                        text = state.value.titleError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -247,18 +240,16 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                     },
                     label = { Text(text = "Opis") },
                     keyboardOptions = KeyboardOptions.Default,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        /*TODO*/
-                    ),
-                    isError = state.value.descriptionError != null
+                    isError = state.value.descriptionError != null,
+                    supportingText = {
+                        if (state.value.descriptionError != null) {
+                            Text(
+                                text = state.value.descriptionError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.descriptionError != null) {
-                    Text(
-                        text = state.value.descriptionError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 ExposedDropdownMenuBox(
                     expanded = expanded.value,
                     onExpandedChange = {
@@ -272,20 +263,16 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .menuAnchor(),
                         value = state.value.type,
                         onValueChange = {
-
                         },
                         label = { Text(text = "Kategorija") },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
                         },
-                        colors = OutlinedTextFieldDefaults.colors(
-
-                        ),
                         readOnly = true
                     )
                     ExposedDropdownMenu(
                         expanded = expanded.value,
-                        onDismissRequest = { expanded.value = false } /*TODO cela duzina*/
+                        onDismissRequest = { expanded.value = false }
                     ) {
                         options.forEach {
                             DropdownMenuItem(
@@ -315,28 +302,44 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                         .heightIn(48.dp),
                     contentPadding = PaddingValues(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(48.dp)
-                            .background(
-                                shape = RoundedCornerShape(50.dp),
-                                color = Color.Black
-                            ),
-                        contentAlignment = Alignment.Center
-                    )
-                    {
-                        Text(
-                            text = "Dodaj na mapu",
-                            fontSize = 18.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(48.dp)
+                                .background(
+                                    shape = RoundedCornerShape(50.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                ),
+                            contentAlignment = Alignment.Center
                         )
+                        {
+                            if (markerViewModel.addInProgress.value) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    text = "Dodaj na mapu",
+                                    fontSize = 18.sp,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
+            }
+            if (markerViewModel.addInProgress.value) {
+                CircularProgressIndicator()
             }
         }
     }

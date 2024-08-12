@@ -18,7 +18,6 @@ import com.example.rmas.screens.LocationScreen
 import com.example.rmas.screens.SingUpScreen
 import com.google.firebase.auth.FirebaseAuth
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun App(navController: NavHostController) {
@@ -37,7 +36,7 @@ fun App(navController: NavHostController) {
                 SingUpScreen(navController)
             }
             composable("HomeScreen") {
-                HomeScreen(startDestination,navController)
+                HomeScreen(startDestination, navController)
             }
             composable("LeaderboardScreen") {
                 LeaderboardScreen()
@@ -45,7 +44,7 @@ fun App(navController: NavHostController) {
             composable("AddMarkerScreen") {
                 AddMarkerScreen(navController)
             }
-            composable("LocationScreen"){
+            composable("LocationScreen") {
                 LocationScreen()
             }
         }

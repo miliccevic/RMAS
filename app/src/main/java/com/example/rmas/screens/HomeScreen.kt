@@ -1,13 +1,11 @@
 package com.example.rmas.screens
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import  android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -23,13 +21,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AddAlert
-import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocationOn
@@ -97,7 +92,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -114,7 +108,6 @@ fun HomeScreen(
     loginViewModel: LoginViewModel = viewModel(),
     filterViewModel: FilterViewModel = viewModel()
 ) {
-    val filterScrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState()
     val isSheetOpen = rememberSaveable { mutableStateOf(false) }
 
@@ -184,7 +177,7 @@ fun HomeScreen(
     val dateRangePickerState = rememberDateRangePickerState()
     val sliderPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val showSecondSheet = rememberSaveable { mutableStateOf(false) }
-    val clickedLocation = remember { mutableStateOf(Location()) }
+    val clickedLocation = rememberSaveable { mutableStateOf("") }
 
     if (userLocation.value != null) {
         locations = locationsCopy
@@ -236,7 +229,7 @@ fun HomeScreen(
         )
     }
 
-    if (ActivityCompat.checkSelfPermission( /*TODO*/
+    if (ActivityCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
@@ -272,7 +265,13 @@ fun HomeScreen(
         gesturesEnabled = false,
         drawerContent = {
             ModalDrawerSheet {
-                LazyColumn {
+                LazyColumn(
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1F)
+                ) {
                     item {
                         Column(
                             modifier = Modifier
@@ -311,7 +310,7 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Map,
                                     contentDescription = null,
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -330,7 +329,7 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Filled.Equalizer,
                                     contentDescription = null,
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -349,7 +348,7 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Filled.LocationOn,
                                     contentDescription = null,
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -370,7 +369,7 @@ fun HomeScreen(
                                 Icon(
                                     imageVector = Icons.Filled.AddAlert,
                                     contentDescription = "",
-                                    tint = Color.Black
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(text = "Servis", fontSize = 14.sp)
                             }
@@ -429,6 +428,8 @@ fun HomeScreen(
                                 }
                             )
                         }
+                    }
+                    item {
                         NavigationDrawerItem(
                             label = { Text(text = "Odjavi se") },
                             selected = false,
@@ -444,8 +445,8 @@ fun HomeScreen(
                             icon = {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Logout,
-                                    contentDescription = "Logout",
-                                    tint = Color.Black
+                                    contentDescription = "",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             },
                             modifier = Modifier
@@ -457,9 +458,13 @@ fun HomeScreen(
         }, drawerState = drawerState
     ) {
         Scaffold(topBar = {
-            CenterAlignedTopAppBar(title = { Text(text = navLabel, color = Color.Black) },
+            CenterAlignedTopAppBar(
+                title = { Text(text = navLabel) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.LightGray,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 navigationIcon = {
@@ -471,7 +476,6 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Filled.Menu,
                             contentDescription = "Menu",
-                            tint = Color.Black
                         )
                     }
                 },
@@ -483,7 +487,6 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Filled.FilterList,
                                 contentDescription = "Filter",
-                                tint = Color.Black
                             )
                         }
                     } else null
@@ -538,7 +541,7 @@ fun HomeScreen(
                                         Marker(
                                             onClick = {
                                                 isBottomSheetOpen.value = true
-                                                clickedLocation.value = marker
+                                                clickedLocation.value = marker.id
                                                 false
                                             },
                                             state = MarkerState(
@@ -568,7 +571,6 @@ fun HomeScreen(
                         isPickerVisible = isPickerVisible,
                         dateRangePickerState = dateRangePickerState,
                         sliderPosition = sliderPosition,
-                        filterScrollState = filterScrollState,
                         showSecondSheet = showSecondSheet,
                         filterViewModel = filterViewModel,
                         state = state
@@ -578,7 +580,7 @@ fun HomeScreen(
                     LocationBottomSheet(
                         sheetState = bottomSheetState,
                         isSheetOpen = isBottomSheetOpen,
-                        location = clickedLocation.value
+                        locationId = clickedLocation.value
                     )
                 }
             }

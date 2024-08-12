@@ -16,5 +16,5 @@ fun Context.hasLocationPermission(): Boolean {
             ) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(
                 this, Manifest.permission.POST_NOTIFICATIONS
-            )==PackageManager.PERMISSION_GRANTED
+            ) == PackageManager.PERMISSION_GRANTED
 }

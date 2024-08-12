@@ -10,9 +10,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,12 +33,12 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,7 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -68,7 +68,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.R
-import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.viewmodels.SingUpViewModel
 import com.example.rmas.presentation.singup.SingUpUIEvent
 import com.example.rmas.utils.ImageUtils
@@ -107,9 +106,11 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Registracija", color = Color.Black) },
+                title = { Text(text = "Registracija") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.LightGray,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -118,7 +119,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.Black
                         )
                     }
                 },
@@ -126,10 +126,9 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
         }
     ) { values ->
         Surface(
-            color = Color.White,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(
                     top = 10.dp,
                     start = 28.dp,
@@ -149,7 +148,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Ime") },
-                    colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     value = state.value.ime,
                     onValueChange = {
@@ -158,21 +156,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             context,
                             navigateToLogin = { })
                     },
-                    isError = state.value.imeError != null
+                    isError = state.value.imeError != null,
+                    supportingText = {
+                        if (state.value.imeError != null) {
+                            Text(
+                                text = state.value.imeError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.imeError != null) {
-                    Text(
-                        text = state.value.imeError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Prezime") },
-                    colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     value = state.value.prezime,
                     onValueChange = {
@@ -181,22 +179,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             context,
                             navigateToLogin = { })
                     },
-                    isError = state.value.prezimeError != null
+                    isError = state.value.prezimeError != null,
+                    supportingText = {
+                        if (state.value.prezimeError != null) {
+                            Text(
+                                text = state.value.prezimeError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.prezimeError != null) {
-                    Text(
-                        text = state.value.prezimeError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Telefon") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     value = state.value.telefon,
                     onValueChange = {
@@ -205,21 +202,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             context,
                             navigateToLogin = { })
                     },
-                    isError = state.value.telefonError != null
+                    isError = state.value.telefonError != null,
+                    supportingText = {
+                        if (state.value.telefonError != null) {
+                            Text(
+                                text = state.value.telefonError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.telefonError != null) {
-                    Text(
-                        text = state.value.telefonError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Email") },
-                    colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     value = state.value.email,
                     onValueChange = {
@@ -228,22 +225,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             context,
                             navigateToLogin = { })
                     },
-                    isError = state.value.emailError != null
+                    isError = state.value.emailError != null,
+                    supportingText = {
+                        if (state.value.emailError != null) {
+                            Text(
+                                text = state.value.emailError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.emailError != null) {
-                    Text(
-                        text = state.value.emailError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Korisničko ime") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                    ),
                     keyboardOptions = KeyboardOptions.Default,
                     value = state.value.username,
                     onValueChange = {
@@ -252,21 +248,21 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             context,
                             navigateToLogin = {})
                     },
-                    isError = state.value.usernameError != null
+                    isError = state.value.usernameError != null,
+                    supportingText = {
+                        if (state.value.usernameError != null) {
+                            Text(
+                                text = state.value.usernameError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.usernameError != null) {
-                    Text(
-                        text = state.value.usernameError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
-                    )
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(4.dp)),
                     label = { Text(text = "Šifra") },
-                    colors = OutlinedTextFieldDefaults.colors(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     value = state.value.password,
                     isError = state.value.passwordError != null,
@@ -290,23 +286,25 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     if (visible.value)
                         VisualTransformation.None
                     else
-                        PasswordVisualTransformation()
+                        PasswordVisualTransformation(),
+                    supportingText = {
+                        if (state.value.passwordError != null) {
+                            Text(
+                                text = state.value.passwordError!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
-                if (state.value.passwordError != null) {
-                    Text(
-                        text = state.value.passwordError!!,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.End
-                    )
-                }
-                if (currentPhoto == null) { /*TODO razmak*/
+                Spacer(modifier = Modifier.height(10.dp))
+                if (currentPhoto == null) {
                     Box(
                         modifier = Modifier
                             .size(90.dp)
                             .clip(CircleShape)
                             .border(
                                 width = 1.dp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -346,7 +344,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             .size(90.dp)
                             .border(
                                 width = 1.dp,
-                                color = Color.Black,
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = CircleShape
                             )
                             .clickable {
@@ -358,7 +356,10 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     Text(
                         text = state.value.imageError!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.End)
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(start = 12.dp),
+                        fontSize = 12.sp
                     )
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -372,30 +373,43 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(48.dp),
-                    contentPadding = PaddingValues(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    )
+                    contentPadding = PaddingValues()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(48.dp)
-                            .background(
-                                shape = RoundedCornerShape(50.dp),
-                                color = Color.Black
-                            ),
-                        contentAlignment = Alignment.Center
-                    )
-                    {
-                        Text(
-                            text = "Registruj se",
-                            fontSize = 18.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(48.dp)
+                                .background(
+                                    shape = RoundedCornerShape(50.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                ),
+                            contentAlignment = Alignment.Center
                         )
+                        {
+                            if (singUpViewModel.singUpInProgress.value) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    text = "Registruj se",
+                                    fontSize = 18.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
+            }
+            if (singUpViewModel.singUpInProgress.value) {
+                CircularProgressIndicator()
             }
         }
     }

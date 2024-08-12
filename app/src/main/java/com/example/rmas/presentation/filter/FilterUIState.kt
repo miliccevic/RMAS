@@ -1,6 +1,5 @@
 package com.example.rmas.presentation.filter
 
-
 data class FilterUIState(
     var startDate: Long? = null,
     var endDate: Long? = null,

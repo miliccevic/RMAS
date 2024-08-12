@@ -1,6 +1,5 @@
 package com.example.rmas.services.location
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import android.location.LocationManager
@@ -18,21 +17,23 @@ import kotlinx.coroutines.launch
 class DefaultLocationClient(
     private val context: Context,
     private val client: FusedLocationProviderClient
-): LocationClient {
+) : LocationClient {
     override fun getLocationUpdates(interval: Long): Flow<Location> {
         return callbackFlow {
-            if(!context.hasLocationPermission()) {
-                throw LocationClient.LocationException("Missing location permission")
+            if (!context.hasLocationPermission()) {
+                throw LocationClient.LocationException()
             }
 
-            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val locationManager =
+                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-            if(!isGpsEnabled && !isNetworkEnabled) {
-                throw LocationClient.LocationException("GPS is disabled")
+            val isNetworkEnabled =
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+            if (!isGpsEnabled && !isNetworkEnabled) {
+                throw LocationClient.LocationException()
             }
 
-            val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,interval)
+            val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
                 .setWaitForAccurateLocation(false)
                 .setMinUpdateIntervalMillis(1000)
                 .setMaxUpdateDelayMillis(interval)

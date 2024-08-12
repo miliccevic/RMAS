@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -48,12 +50,19 @@ import java.util.Locale
 fun LocationBottomSheet(
     sheetState: SheetState,
     isSheetOpen: MutableState<Boolean>,
-    location: Location
+    locationId: String
 ) {
     var user by remember { mutableStateOf(User()) }
-    Firebase.getUser(location.userId) {
+    var location by remember { mutableStateOf(Location()) }
+
+    Firebase.getLocation(locationId) {
         if (it != null) {
-            user = it
+            location = it
+            Firebase.getUser(location.userId) { us ->
+                if (us != null) {
+                    user = us
+                }
+            }
         }
     }
     val userId = FirebaseAuth.getInstance().currentUser!!.uid
@@ -67,92 +76,104 @@ fun LocationBottomSheet(
         },
         sheetState = sheetState,
     ) {
-        Column(
-            /*TODO scroll*/
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(start = 20.dp, end = 20.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(location.title, style = MaterialTheme.typography.headlineMedium)
-                if (location.userId != userId) {
-                    IconToggleButton(
-                        checked = favorites.any {
-                            it.locationId == location.id
-                        },
-                        onCheckedChange = {
-                            if (favorites.any {
-                                    it.locationId == location.id
-                                }) {
-                                Firebase.removeLikeFromDb(userId, location.id)
-                            } else {
-                                Firebase.addLikeToDb(userId, location.id)
-                            }
-                        }
-                    ) {
-                        Icon(
-                            tint = Color(0xffE91E63),
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    scaleX = 1.3f
-                                    scaleY = 1.3f
-                                },
-                            imageVector = if (favorites.any {
-                                    it.locationId == location.id
-                                }) {
-                                Icons.Filled.Favorite
-                            } else {
-                                Icons.Default.FavoriteBorder
+        LazyColumn {
+            item {
+                Row(
+                    modifier = Modifier
+                        .padding(start = 20.dp, end = 20.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(location.title, style = MaterialTheme.typography.headlineMedium)
+                    if (location.userId != userId) {
+                        IconToggleButton(
+                            checked = favorites.any {
+                                it.locationId == location.id
                             },
-                            contentDescription = null
-                        )
+                            onCheckedChange = {
+                                if (favorites.any {
+                                        it.locationId == location.id
+                                    }) {
+                                    Firebase.removeLikeFromDb(userId, location.id)
+                                } else {
+                                    Firebase.addLikeToDb(userId, location.id)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                tint = Color(0xffE91E63),
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        scaleX = 1.3f
+                                        scaleY = 1.3f
+                                    },
+                                imageVector = if (favorites.any {
+                                        it.locationId == location.id
+                                    }) {
+                                    Icons.Filled.Favorite
+                                } else {
+                                    Icons.Default.FavoriteBorder
+                                },
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier
-                    .padding(start = 20.dp, end = 20.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .padding(start = 20.dp, end = 20.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = user.image),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(30.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                    Text(user.username, style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            item {
                 Image(
-                    painter = rememberAsyncImagePainter(model = user.image),
+                    painter = rememberAsyncImagePainter(model = location.image),
                     contentDescription = "",
                     modifier = Modifier
-                        .clip(CircleShape)
-                        .size(30.dp),
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .width(500.dp)
+                        .padding(top = 20.dp, end = 20.dp, start = 20.dp),
                     contentScale = ContentScale.Crop
                 )
-                Text(user.username, style = MaterialTheme.typography.titleMedium)
             }
-            Image( /*TODO*/
-                painter = rememberAsyncImagePainter(model = location.image),
-                contentDescription = "",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp, end = 20.dp, start = 20.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 20.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = convertTimestampToDate(location.date.seconds * 1000 + location.date.nanoseconds / 1000000),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+            }
+            item {
                 Text(
-                    text = convertTimestampToDate(location.date.seconds * 1000 + location.date.nanoseconds / 1000000),
-                    style = MaterialTheme.typography.titleSmall,
+                    text = location.description,
+                    modifier = Modifier
+                        .padding(20.dp),
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
-            Text(
-                text = location.description,
-                modifier = Modifier.padding(20.dp),
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }

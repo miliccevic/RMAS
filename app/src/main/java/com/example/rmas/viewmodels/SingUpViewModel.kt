@@ -21,6 +21,8 @@ class SingUpViewModel : ViewModel() {
     private val _singUpUIState = MutableStateFlow(SingUpUIState())
     val singUpUIState = _singUpUIState.asStateFlow()
     private var allValidationsPassed = mutableStateOf(false)
+    var singUpInProgress = mutableStateOf(false)
+
     fun onEvent(event: SingUpUIEvent, context: Context, navigateToLogin: () -> Unit) {
         when (event) {
             is SingUpUIEvent.ImeChanged -> {
@@ -81,6 +83,7 @@ class SingUpViewModel : ViewModel() {
     }
 
     private fun createUser(context: Context, navigateToLogin: () -> Unit) {
+        singUpInProgress.value = true
         val db = Firebase.firestore
         db.collection("users").whereEqualTo("username", _singUpUIState.value.username).get()
             .addOnCompleteListener {
@@ -91,13 +94,13 @@ class SingUpViewModel : ViewModel() {
                                 _singUpUIState.value.email,
                                 _singUpUIState.value.password
                             )
-                            .addOnCompleteListener {res->
+                            .addOnCompleteListener { res ->
                                 if (res.isSuccessful) {
                                     FirebaseAuth.getInstance().currentUser!!.sendEmailVerification()
                                         .addOnCompleteListener {
                                             addToDatabase(
                                                 context,
-                                                id=FirebaseAuth.getInstance().currentUser!!.uid,
+                                                id = FirebaseAuth.getInstance().currentUser!!.uid,
                                                 ime = _singUpUIState.value.ime,
                                                 prezime = _singUpUIState.value.prezime,
                                                 email = _singUpUIState.value.email,
@@ -115,6 +118,7 @@ class SingUpViewModel : ViewModel() {
                                             ).show()
                                             FirebaseAuth.getInstance().currentUser!!.delete()
                                             Log.d("TAG", ex.localizedMessage)
+                                            singUpInProgress.value = false
                                         }
                                 }
                             }
@@ -125,6 +129,7 @@ class SingUpViewModel : ViewModel() {
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 Log.d("TAG", ex.localizedMessage)
+                                singUpInProgress.value = false
                             }
                     } else {
                         Toast.makeText(
@@ -132,7 +137,15 @@ class SingUpViewModel : ViewModel() {
                             "Uneto korisničko ime već postoji",
                             Toast.LENGTH_SHORT
                         ).show()
+                        singUpInProgress.value = false
                     }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Došlo je do greške prilikom kreiranja naloga.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    singUpInProgress.value = false
                 }
             }
             .addOnFailureListener {
@@ -142,13 +155,14 @@ class SingUpViewModel : ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.d("TAG", it.localizedMessage)
+                singUpInProgress.value = false
             }
 
     }
 
     private fun addToDatabase(
         context: Context,
-        id:String,
+        id: String,
         ime: String,
         prezime: String,
         email: String,
@@ -170,7 +184,7 @@ class SingUpViewModel : ViewModel() {
                         .addOnCompleteListener { it1 ->
                             if (it1.isSuccessful) {
                                 url = it1.result.toString()
-                                val user = User(id,username, ime, prezime, telefon, url, email, 0L)
+                                val user = User(id, username, ime, prezime, telefon, url, email, 0L)
                                 db.collection("users")
                                     .document(uid)
                                     .set(user)
@@ -184,6 +198,7 @@ class SingUpViewModel : ViewModel() {
                                             "Došlo je do greške prilikom kreiranja naloga.",
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                        singUpInProgress.value = false
                                     }
                                     .addOnCompleteListener { res ->
                                         if (res.isSuccessful) {
@@ -195,7 +210,16 @@ class SingUpViewModel : ViewModel() {
                                             FirebaseAuth.getInstance().signOut()
                                             onNavigate.invoke()
                                         }
+                                        singUpInProgress.value = false
                                     }
+                            } else {
+                                currentUser?.delete()
+                                Toast.makeText(
+                                    context,
+                                    "Došlo je do greške prilikom kreiranja naloga.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                singUpInProgress.value = false
                             }
                         }
                         .addOnFailureListener { e ->
@@ -206,7 +230,16 @@ class SingUpViewModel : ViewModel() {
                                 Toast.LENGTH_SHORT
                             ).show()
                             Log.d("TAG", e.localizedMessage)
+                            singUpInProgress.value = false
                         }
+                } else {
+                    currentUser?.delete()
+                    Toast.makeText(
+                        context,
+                        "Došlo je do greške prilikom kreiranja naloga.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    singUpInProgress.value = false
                 }
             }
             .addOnFailureListener {
@@ -217,6 +250,7 @@ class SingUpViewModel : ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.d("TAG", it.localizedMessage)
+                singUpInProgress.value = false
             }
     }
 

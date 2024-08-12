@@ -2,10 +2,10 @@ package com.example.rmas.components
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -22,8 +23,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -32,7 +33,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DateRangePickerState
 import androidx.compose.material3.DisplayMode
@@ -89,7 +89,7 @@ fun FilterChips(state: State<FilterUIState>, filterViewModel: FilterViewModel) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
-            .padding(8.dp),
+            .padding(start = 16.dp, end = 16.dp),
         verticalArrangement = Arrangement.Top
     ) {
         options.forEach {
@@ -102,7 +102,7 @@ fun FilterChips(state: State<FilterUIState>, filterViewModel: FilterViewModel) {
                     {
                         Icon(
                             imageVector = Icons.Filled.Done,
-                            contentDescription = "Done icon",
+                            contentDescription = "",
                             modifier = Modifier.size(FilterChipDefaults.IconSize)
                         )
                     }
@@ -121,7 +121,9 @@ fun DistanceSlider(
     filterViewModel: FilterViewModel,
     labelMinWidth: Dp = 24.dp,
 ) {
-    Column {
+    Column(
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+    ) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
@@ -130,7 +132,7 @@ fun DistanceSlider(
                 value = sliderPosition.value,
                 valueRange = valueRange,
                 boxWidth = maxWidth,
-                labelWidth = labelMinWidth + 8.dp
+                labelWidth = labelMinWidth + 16.dp
             )
 
             val valueText = sliderPosition.value.toInt().toString()
@@ -168,10 +170,9 @@ fun SliderLabel(
     Text(
         text = label,
         textAlign = TextAlign.Center,
-        color = Color.White,
         modifier = modifier
             .background(
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(40)
             )
             .padding(4.dp)
@@ -207,7 +208,7 @@ fun DatePicker(
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp),
         value = state.value.datum,
         onValueChange = {},
         readOnly = true,
@@ -337,76 +338,121 @@ fun DatePicker(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun FilterBottomSheet(
-    isSheetOpen: MutableState<Boolean>,
     isPickerVisible: MutableState<Boolean>,
     dateRangePickerState: DateRangePickerState,
     sliderPosition: MutableState<Float>,
-    filterScrollState: ScrollState,
     filterViewModel: FilterViewModel,
     state: State<FilterUIState>,
     showSecondSheet: MutableState<Boolean>
 ) {
-    Column(
-        modifier = Modifier
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { isSheetOpen.value = false }) {
-                Icon(Icons.Default.Close, contentDescription = null)
-            }
-            Text(
-                "Filteri",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            ) /*TODO*/
-            TextButton(onClick = {
-                filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked)
-                sliderPosition.value = 0f
-            }) {
-                Text("Resetuj")
+    LazyColumn {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    TextButton(onClick = {
+                        filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked)
+                        sliderPosition.value = 0f
+                    }) {
+                        Text("Resetuj")
+                    }
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Text(
+                        "Filteri",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                }
             }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(filterScrollState)
-        ) {
-            Text(text = "Naziv", style = MaterialTheme.typography.titleMedium)
+        item {
+            Text(
+                text = "Naziv",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp)
+            )
             SearchBar(state, filterViewModel)
-            HorizontalDivider(thickness = 1.dp)
-            Text(text = "Datum", style = MaterialTheme.typography.titleMedium)
+        }
+        item {
+            HorizontalDivider(
+                thickness = 1.dp,
+                modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+            )
+            Text(
+                text = "Datum",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
             DatePicker(
                 isPickerVisible,
                 dateRangePickerState,
                 filterViewModel,
                 state
             )
-            HorizontalDivider(thickness = 1.dp)
-            Text(text = "Rastojanje", style = MaterialTheme.typography.titleMedium) /*TODO*/
-            DistanceSlider(sliderPosition, 0f..999f, filterViewModel)
-            HorizontalDivider(thickness = 1.dp)
-            Text("Tip", style = MaterialTheme.typography.titleMedium)
-            FilterChips(state, filterViewModel)
-            HorizontalDivider(thickness = 1.dp)
-            Text("Korisnici", style = MaterialTheme.typography.titleMedium)
+        }
+        item {
+            HorizontalDivider(
+                thickness = 1.dp,
+                modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+            )
+            Text(
+                "Korisnici",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 8.dp)
+                    .clickable {
+                        showSecondSheet.value = true
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Absolute.SpaceBetween
             ) {
-                Text("Izaberite korisnike", modifier = Modifier.weight(1f))
-                IconButton(onClick = { showSecondSheet.value = true }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null
-                    )
-                }
+                Text(
+                    "Izaberite korisnike",
+                    modifier = Modifier
+                        .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null
+                )
             }
+        }
+        item {
+            HorizontalDivider(
+                thickness = 1.dp,
+                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+            )
+            Text(
+                "Tip objekta",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+            FilterChips(state, filterViewModel)
+        }
+        item {
+            HorizontalDivider(
+                thickness = 1.dp,
+                modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+            )
+            Text(
+                text = "Rastojanje u kilometrima",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+            DistanceSlider(sliderPosition, 0f..999f, filterViewModel)
+        }
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -431,7 +477,7 @@ fun SecondBottomSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { isSheetOpen.value = false }) {
-                Icon(Icons.Default.Close, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }
             TextButton(onClick = { filterViewModel.onEvent(FilterUIEvent.ResetUsersClicked) }) {
                 Text("Resetuj")
@@ -482,7 +528,6 @@ fun BottomSheet(
     isPickerVisible: MutableState<Boolean>,
     dateRangePickerState: DateRangePickerState,
     sliderPosition: MutableState<Float>,
-    filterScrollState: ScrollState,
     showSecondSheet: MutableState<Boolean>,
     filterViewModel: FilterViewModel,
     state: State<FilterUIState>
@@ -496,11 +541,9 @@ fun BottomSheet(
     ) {
         if (!showSecondSheet.value) {
             FilterBottomSheet(
-                isSheetOpen = isSheetOpen,
                 isPickerVisible = isPickerVisible,
                 dateRangePickerState = dateRangePickerState,
                 sliderPosition = sliderPosition,
-                filterScrollState = filterScrollState,
                 filterViewModel = filterViewModel,
                 state = state,
                 showSecondSheet = showSecondSheet
@@ -520,7 +563,7 @@ fun SearchBar(state: State<FilterUIState>, filterViewModel: FilterViewModel) {
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(start = 16.dp, end = 16.dp),
         label = { Text(text = "Pretraga") },
         value = state.value.searchText,
         onValueChange = {

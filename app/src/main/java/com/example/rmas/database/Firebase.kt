@@ -23,10 +23,23 @@ object Firebase {
 
     fun getUser(uid: String, listener: (User?) -> Unit) {
         val db = Firebase.firestore
-        db.collection("users").document(uid).get()
+        db.collection("users")
+            .document(uid)
+            .get()
             .addOnSuccessListener {
                 if (it.exists())
                     listener(it.toObject(User::class.java))
+            }
+    }
+
+    fun getLocation(uid: String, listener: (Location?) -> Unit) {
+        val db = Firebase.firestore
+        db.collection("locations")
+            .document(uid)
+            .get()
+            .addOnSuccessListener {
+                if (it.exists())
+                    listener(it.toObject(Location::class.java))
             }
     }
 
@@ -46,7 +59,7 @@ object Firebase {
     fun addLikeToDb(userId: String, locationId: String) {
         val db = Firebase.firestore
         val ref = db.collection("likes").document()
-        val like = Like(id=ref.id,userId = userId, locationId = locationId)
+        val like = Like(id = ref.id, userId = userId, locationId = locationId)
         ref.set(like)
             .addOnSuccessListener {
                 db.collection("users").document(userId)

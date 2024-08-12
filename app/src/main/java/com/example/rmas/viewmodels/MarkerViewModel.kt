@@ -27,6 +27,7 @@ class MarkerViewModel() : ViewModel() {
     val markerUIState = _markerUIState.asStateFlow()
 
     private var allValidationsPassed = mutableStateOf(false)
+    var addInProgress = mutableStateOf(false)
     fun onEvent(event: MarkerUIEvent, context: Context, onClick: () -> Unit) {
         when (event) {
             is MarkerUIEvent.TitleChanged -> {
@@ -71,6 +72,7 @@ class MarkerViewModel() : ViewModel() {
             ).show()
             return
         }
+        addInProgress.value = true
         val userId = FirebaseAuth.getInstance().currentUser!!.uid
         val db = Firebase.firestore
         val storage = FirebaseStorage.getInstance().reference.child("slike_lokacija")
@@ -125,6 +127,7 @@ class MarkerViewModel() : ViewModel() {
                             Log.d("TAG", ex.localizedMessage)
                         }
                 }
+                addInProgress.value = false
             }
             .addOnFailureListener {
                 Toast.makeText(
@@ -133,6 +136,7 @@ class MarkerViewModel() : ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.d("TAG", it.localizedMessage)
+                addInProgress.value = false
             }
     }
 

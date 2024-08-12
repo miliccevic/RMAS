@@ -2,7 +2,6 @@ package com.example.rmas.presentation.marker
 
 import android.net.Uri
 
-
 sealed class MarkerUIEvent {
     data class DescriptionChanged(val description: String) : MarkerUIEvent()
     data class TitleChanged(val title: String) : MarkerUIEvent()

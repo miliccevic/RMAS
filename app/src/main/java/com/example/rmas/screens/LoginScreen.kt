@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,16 +24,15 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,7 +51,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.rmas.presentation.login.LoginUIEvent
 import com.example.rmas.viewmodels.LoginViewModel
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = viewModel()) {
@@ -61,11 +60,10 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
     val visible = rememberSaveable { mutableStateOf(false) }
 
     Surface(
-        color = Color.White,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(28.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(start = 28.dp, end = 28.dp)
     ) {
         Column(
             modifier = Modifier
@@ -77,54 +75,53 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             Box(
                 modifier = Modifier
                     .size(112.dp)
-                    .background(Color(0xFFAD3656), shape = CircleShape),
+                    .background(Color(0xFF904A49), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Explore,
                     contentDescription = "",
                     tint = Color.White,
-                    modifier = Modifier.size(100 .dp)
+                    modifier = Modifier.size(100.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(4.dp)),
                 label = { Text(text = "Korisničko ime") },
-                colors = OutlinedTextFieldDefaults.colors(),
                 keyboardOptions = KeyboardOptions.Default,
                 value = state.value.username,
                 onValueChange = {
                     loginViewModel.onEvent(
                         LoginUIEvent.UsernameChanged(it),
                         context,
-                        navigateToHome = {  })
+                        navigateToHome = { })
                 },
-                isError = state.value.usernameError != null
+                isError = state.value.usernameError != null,
+                supportingText = {
+                    if (state.value.usernameError != null) {
+                        Text(
+                            text = state.value.usernameError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
-            if (state.value.usernameError != null) {
-                Text(
-                    text = state.value.usernameError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(4.dp)),
                 label = { Text(text = "Šifra") },
-                colors = OutlinedTextFieldDefaults.colors(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 value = state.value.password,
                 onValueChange = {
                     loginViewModel.onEvent(
                         LoginUIEvent.PasswordChanged(it),
                         context,
-                        navigateToHome = {  })
+                        navigateToHome = { })
                 },
                 isError = state.value.passwordError != null,
                 trailingIcon = {
@@ -141,15 +138,16 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 if (visible.value)
                     VisualTransformation.None
                 else
-                    PasswordVisualTransformation()
+                    PasswordVisualTransformation(),
+                supportingText = {
+                    if (state.value.passwordError != null) {
+                        Text(
+                            text = state.value.passwordError!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
-            if (state.value.passwordError != null) {
-                Text(
-                    text = state.value.passwordError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.End)
-                )
-            }
             Spacer(modifier = Modifier.height(10.dp))
             Button(
                 onClick = {
@@ -161,28 +159,37 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(48.dp),
-                contentPadding = PaddingValues(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                )
+                contentPadding = PaddingValues()
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(48.dp)
-                        .background(
-                            shape = RoundedCornerShape(50.dp),
-                            color = Color.Black
-                        ),
-                    contentAlignment = Alignment.Center
-                )
-                {
-                    Text(
-                        text = "Prijavi se",
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(48.dp)
+                            .background(
+                                shape = RoundedCornerShape(50.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            ),
+                        contentAlignment = Alignment.Center
                     )
+                    {
+                        if (loginViewModel.loginInProgress.value) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Prijavi se",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -192,10 +199,10 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             ) {
                 Text(
                     text = "Registruj se",
-                    color = Color.Black,
                     fontSize = 16.sp,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
+
             }
         }
     }

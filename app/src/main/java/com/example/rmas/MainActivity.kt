@@ -7,14 +7,17 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.navigation.compose.rememberNavController
 import com.example.rmas.app.App
+import com.example.rmas.ui.theme.RMASTheme
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController()
-            App(navController)
+            RMASTheme(dynamicColor = false) {
+                val navController = rememberNavController()
+                App(navController)
+            }
         }
     }
 }
