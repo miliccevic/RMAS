@@ -1,6 +1,8 @@
 package com.example.rmas.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,38 +34,57 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.data.User
 import com.example.rmas.database.Firebase
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LeaderboardScreen() {
     var users by remember { mutableStateOf(emptyList<User>()) }
     Firebase.getAllUsers {
         users = it
     }
-    LazyColumn {
-        itemsIndexed(users) { index, user ->
-            Column {
+    Surface {
+        LazyColumn {
+            stickyHeader {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "${index + 1}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Image(
-                        painter = rememberAsyncImagePainter(user.image),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = user.username, fontSize = 18.sp)
+                    Text(text = "#", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(56.dp))
+                    Text(text = "Korisničko ime", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text(text = "${user.points}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(text = "Poeni", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                HorizontalDivider(color = Color.Gray, thickness = 1.dp)
+            }
+            itemsIndexed(users) { index, user ->
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "${index + 1}", fontSize = 18.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Image(
+                            painter = rememberAsyncImagePainter(user.image),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(text = user.username, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(text = "${user.points}", fontSize = 18.sp)
+                    }
+                    HorizontalDivider(color = Color.Gray, thickness = 1.dp)
                 }
             }
-            HorizontalDivider(color = Color.Gray, thickness = 1.dp)
         }
     }
 }

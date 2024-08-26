@@ -1,7 +1,6 @@
 package com.example.rmas.data
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.GeoPoint
 import java.util.Date
 
@@ -16,11 +15,10 @@ data class Location(
     var date: Timestamp = Timestamp(Date())
 ) {
     fun doesMatchSearchQuery(query: String): Boolean {
-        val words = query
-            .replace(Regex(""""(.?(\\")?)*?""""), "")
-            .split(Regex("\\s+")).toSet()
-        return words.any {
-            it.contains(query, ignoreCase = true)
-        }
+        val regex = query.split(" ")
+            .joinToString(".*") {
+                Regex.escape(it)
+            }.toRegex(RegexOption.IGNORE_CASE)
+        return regex.containsMatchIn(description) || regex.containsMatchIn(title)
     }
 }

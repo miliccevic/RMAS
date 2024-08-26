@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -75,7 +73,7 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
             Box(
                 modifier = Modifier
                     .size(112.dp)
-                    .background(Color(0xFF904A49), shape = CircleShape),
+                    .background(Color(0xFF415F91), shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -109,7 +107,6 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     }
                 }
             )
-            Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,35 +158,17 @@ fun LoginScreen(navController: NavController, loginViewModel: LoginViewModel = v
                     .heightIn(48.dp),
                 contentPadding = PaddingValues()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(48.dp)
-                            .background(
-                                shape = RoundedCornerShape(50.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            ),
-                        contentAlignment = Alignment.Center
+                if (loginViewModel.loginInProgress.value) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.inversePrimary,
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                        strokeWidth = 2.dp
                     )
-                    {
-                        if (loginViewModel.loginInProgress.value) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(ButtonDefaults.IconSize),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "Prijavi se",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                } else {
+                    Text(
+                        text = "Prijavi se",
+                        fontSize = 18.sp,
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))

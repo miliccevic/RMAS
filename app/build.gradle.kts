@@ -97,6 +97,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.vanniktech:android-image-cropper:4.5.0")
     implementation("network.chaintech:cmp-image-pick-n-crop:1.0.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0-RC.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

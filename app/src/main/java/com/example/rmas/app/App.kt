@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,8 +24,7 @@ fun App(navController: NavHostController) {
         "LoginScreen"
     else "HomeScreen"
     Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
+        modifier = Modifier.fillMaxSize()
     ) {
         NavHost(navController = navController, startDestination = startDestination) {
             composable("LoginScreen") {

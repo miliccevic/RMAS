@@ -1,8 +1,9 @@
 package com.example.rmas.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,17 +35,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.rmas.data.Like
 import com.example.rmas.data.Location
 import com.example.rmas.data.User
 import com.example.rmas.database.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationBottomSheet(
@@ -157,12 +161,14 @@ fun LocationBottomSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(end = 20.dp),
+                        .padding(top = 10.dp, end = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     Text(
-                        text = convertTimestampToDate(location.date.seconds * 1000 + location.date.nanoseconds / 1000000),
+                        text = convertTimestampToDate(location.date),
                         style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray
                     )
                 }
             }
@@ -171,15 +177,23 @@ fun LocationBottomSheet(
                     text = location.description,
                     modifier = Modifier
                         .padding(20.dp),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Justify
                 )
             }
         }
     }
 }
 
-fun convertTimestampToDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    val date = Date(timestamp)
-    return sdf.format(date)
+@RequiresApi(Build.VERSION_CODES.O)
+fun convertTimestampToDate(timestamp: Timestamp): String {
+    val date = timestamp
+        .toDate()
+        .toInstant()
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime()
+
+    val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'u' HH:mm")
+
+    return date.format(formatter)
 }

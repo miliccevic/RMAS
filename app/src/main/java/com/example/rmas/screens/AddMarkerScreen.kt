@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,9 +55,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,7 +65,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.rmas.R
 import com.example.rmas.presentation.marker.MarkerUIEvent
 import com.example.rmas.utils.ImageUtils
 import com.example.rmas.viewmodels.MarkerViewModel
@@ -85,10 +85,8 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
             if (it.resultCode == Activity.RESULT_OK) {
                 val data = it.data?.data
                 currentPhoto = if (data == null) {
-                    // Camera intent
                     imageUtils.currentPhotoPath
                 } else {
-                    // Gallery Pick Intent
                     imageUtils.getPathFromGalleryUri(data)
                 }
             }
@@ -146,13 +144,14 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .clip(CircleShape)
                             .border(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor,
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                            colorFilter = ColorFilter.tint(OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor),
+                            imageVector = Icons.Filled.CameraAlt,
                             contentDescription = "",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
@@ -186,7 +185,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             .size(90.dp)
                             .border(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor,
                                 shape = CircleShape
                             )
                             .clickable {
@@ -194,6 +193,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                             }
                     )
                 }
+                Spacer(modifier = Modifier.height(15.dp))
                 if (state.value.imageError != null) {
                     Text(
                         text = state.value.imageError!!,
@@ -289,7 +289,7 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Button(
                     onClick = {
                         markerViewModel.onEvent(
@@ -301,45 +301,21 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                         .fillMaxWidth()
                         .heightIn(48.dp),
                     contentPadding = PaddingValues(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(48.dp)
-                                .background(
-                                    shape = RoundedCornerShape(50.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                ),
-                            contentAlignment = Alignment.Center
+                    if (markerViewModel.addInProgress.value) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.inversePrimary,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            strokeWidth = 2.dp
                         )
-                        {
-                            if (markerViewModel.addInProgress.value) {
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(
-                                    text = "Dodaj na mapu",
-                                    fontSize = 18.sp,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                    } else {
+                        Text(
+                            text = "Dodaj na mapu",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
-            }
-            if (markerViewModel.addInProgress.value) {
-                CircularProgressIndicator()
             }
         }
     }

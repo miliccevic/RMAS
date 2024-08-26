@@ -90,14 +90,17 @@ import com.google.firebase.Timestamp
 import java.util.Date
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Man
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import com.example.rmas.components.LocationBottomSheet
 import com.example.rmas.services.location.LocationService
 import com.google.maps.android.SphericalUtil
+import com.google.maps.android.compose.MarkerComposable
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -261,6 +264,21 @@ fun HomeScreen(
     }
     var checked by rememberSaveable { mutableStateOf(isTrackingServiceEnabled) }
 
+    if (userLocation.value != null) {
+        LaunchedEffect(key1 = true) {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newCameraPosition(
+                    CameraPosition(
+                        LatLng(
+                            userLocation.value!!.latitude,
+                            userLocation.value!!.longitude
+                        ), 25f, 0f, 0f
+                    )
+                ),
+                durationMs = 1000
+            )
+        }
+    }
     ModalNavigationDrawer(
         gesturesEnabled = false,
         drawerContent = {
@@ -527,14 +545,22 @@ fun HomeScreen(
                                             )
                                         )
                                     )
-                                    Marker(
+                                    MarkerComposable(
+                                        title = "Vaša lokacija",
                                         state = MarkerState(
                                             position = LatLng(
                                                 userLocation.value!!.latitude,
                                                 userLocation.value!!.longitude
                                             )
                                         )
-                                    )
+                                    ) {
+                                        Icon(
+                                            modifier = Modifier
+                                                .size(55.dp),
+                                            imageVector = Icons.Filled.Man, contentDescription = "",
+                                            tint = Color.Black
+                                        )
+                                    }
                                 }
                                 locations.let { locations ->
                                     for (marker in locations)

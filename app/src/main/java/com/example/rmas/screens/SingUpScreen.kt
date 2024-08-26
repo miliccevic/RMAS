@@ -10,11 +10,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -39,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,11 +53,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -67,7 +65,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.rmas.R
 import com.example.rmas.viewmodels.SingUpViewModel
 import com.example.rmas.presentation.singup.SingUpUIEvent
 import com.example.rmas.utils.ImageUtils
@@ -115,7 +112,9 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                 modifier = Modifier
                     .fillMaxWidth(),
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = {
+                        navController.navigateUp()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -296,37 +295,37 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         }
                     }
                 )
-                Spacer(modifier = Modifier.height(10.dp))
                 if (currentPhoto == null) {
                     Box(
                         modifier = Modifier
                             .size(90.dp)
                             .clip(CircleShape)
+                            .clickable {
+                                if (ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.CAMERA
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                } else {
+                                    launcher.launch(imageUtils.getIntent())
+                                }
+                            }
                             .border(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor,
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.baseline_camera_alt_24),
+                            colorFilter = ColorFilter.tint(OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor),
+                            imageVector = Icons.Filled.CameraAlt,
                             contentDescription = "",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .size(70.dp)
-                                .clickable {
-                                    if (ContextCompat.checkSelfPermission(
-                                            context,
-                                            Manifest.permission.CAMERA
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                    } else {
-                                        launcher.launch(imageUtils.getIntent())
-                                    }
-                                }
                         )
                     }
                 } else {
@@ -344,7 +343,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             .size(90.dp)
                             .border(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor,
                                 shape = CircleShape
                             )
                             .clickable {
@@ -362,7 +361,7 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         fontSize = 12.sp
                     )
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(15.dp))
                 Button(
                     onClick = {
                         singUpViewModel.onEvent(
@@ -375,41 +374,19 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         .heightIn(48.dp),
                     contentPadding = PaddingValues()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(48.dp)
-                                .background(
-                                    shape = RoundedCornerShape(50.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                ),
-                            contentAlignment = Alignment.Center
+                    if (singUpViewModel.singUpInProgress.value) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.inversePrimary,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            strokeWidth = 2.dp
                         )
-                        {
-                            if (singUpViewModel.singUpInProgress.value) {
-                                CircularProgressIndicator(
-                                    color = Color.White,
-                                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(
-                                    text = "Registruj se",
-                                    fontSize = 18.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                    } else {
+                        Text(
+                            text = "Registruj se",
+                            fontSize = 18.sp,
+                        )
                     }
                 }
-            }
-            if (singUpViewModel.singUpInProgress.value) {
-                CircularProgressIndicator()
             }
         }
     }

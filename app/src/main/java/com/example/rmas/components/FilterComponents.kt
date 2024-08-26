@@ -352,7 +352,12 @@ fun FilterBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 2.dp)
+                ) {
                     TextButton(onClick = {
                         filterViewModel.onEvent(FilterUIEvent.ResetButtonClicked)
                         sliderPosition.value = 0f
