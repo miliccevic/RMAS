@@ -14,14 +14,13 @@ import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
 
-class MarkerViewModel() : ViewModel() {
+class MarkerViewModel : ViewModel() {
 
     private val _markerUIState = MutableStateFlow(MarkerUIState())
     val markerUIState = _markerUIState.asStateFlow()
@@ -94,10 +93,8 @@ class MarkerViewModel() : ViewModel() {
                                     image = url,
                                     date = Timestamp(Date()),
                                     type = _markerUIState.value.type,
-                                    location = GeoPoint(
-                                        UserLocation.location.value!!.latitude,
-                                        UserLocation.location.value!!.longitude
-                                    )
+                                    latitude = UserLocation.location.value!!.latitude,
+                                    longitude = UserLocation.location.value!!.longitude
                                 )
                                 ref.set(location)
                                     .addOnCompleteListener {
@@ -141,7 +138,7 @@ class MarkerViewModel() : ViewModel() {
     }
 
     private fun addPoints(context: Context, points: Long, onClick: () -> Unit) {
-        var uid = FirebaseAuth.getInstance().currentUser!!.uid
+        val uid = FirebaseAuth.getInstance().currentUser!!.uid
         val db = Firebase.firestore
         db.collection("users").document(uid).update("points", FieldValue.increment(points))
             .addOnCompleteListener {

@@ -13,10 +13,8 @@ import androidx.core.app.NotificationCompat
 import com.example.rmas.MainActivity
 import com.example.rmas.R
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.maps.android.SphericalUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlin.math.cos
 
 class LocationService : Service() {
 
@@ -106,19 +105,29 @@ class LocationService : Service() {
             .build()
     }
 
-    private fun sendNearbyLocationsNotification(latitude: Double, longitude: Double) {
+    private fun sendNearbyLocationsNotification(lat: Double, lng: Double) {
+        val radiusInKm = 0.1
+        val earthRadiusKm = 6371.0
+
+        val latDelta = Math.toDegrees(radiusInKm / earthRadiusKm)
+        val lngDelta = Math.toDegrees(radiusInKm / (earthRadiusKm * cos(Math.toRadians(lat))))
+
+        val minLat = lat - latDelta
+        val maxLat = lat + latDelta
+        val minLng = lng - lngDelta
+        val maxLng = lng + lngDelta
+
         val db = Firebase.firestore
         db.collection("locations")
+            .whereGreaterThanOrEqualTo("latitude", minLat)
+            .whereLessThanOrEqualTo("latitude", maxLat)
+            .whereGreaterThanOrEqualTo("longitude", minLng)
+            .whereLessThanOrEqualTo("longitude", maxLng)
             .addSnapshotListener { snap, _ ->
                 if (snap != null) {
                     for (doc in snap) {
-                        val geoPoint = doc.getGeoPoint("location")
-                        val startLatLng = LatLng(latitude, longitude)
-                        val endLatLng =
-                            LatLng(geoPoint!!.latitude, geoPoint.longitude)
-                        val distance = SphericalUtil.computeDistanceBetween(startLatLng, endLatLng)
-                        if (distance <= 100 && !notifiedLocations.contains(doc.id)) {
-                            sendNotification()
+                        if (!notifiedLocations.contains(doc.id)) {
+                            sendNotification(doc.get("title").toString())
                             notifiedLocations.add(doc.id)
                         }
                     }
@@ -126,7 +135,7 @@ class LocationService : Service() {
             }
     }
 
-    private fun sendNotification() {
+    private fun sendNotification(title: String) {
         val activityIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -137,7 +146,7 @@ class LocationService : Service() {
 
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
             .setContentTitle("Objekat u blizi")
-            .setContentText("Nalazite se u blizini nekog objekta!")
+            .setContentText("Nalazite se u blizini objekta: ${title}!")
             .setSmallIcon(R.drawable.baseline_notifications_24)
             .setContentIntent(pendingIntent)
             .build()

@@ -196,7 +196,7 @@ fun HomeScreen(
         }
         if (state.value.distance != null) {
             locations = locations.filter {
-                val startLatLng = LatLng(it.location.latitude, it.location.longitude)
+                val startLatLng = LatLng(it.latitude, it.longitude)
                 val endLatLng =
                     LatLng(userLocation.value!!.latitude, userLocation.value!!.longitude)
                 SphericalUtil.computeDistanceBetween(
@@ -572,8 +572,8 @@ fun HomeScreen(
                                             },
                                             state = MarkerState(
                                                 position = LatLng(
-                                                    marker.location.latitude,
-                                                    marker.location.longitude
+                                                    marker.latitude,
+                                                    marker.longitude
                                                 )
                                             )
                                         )

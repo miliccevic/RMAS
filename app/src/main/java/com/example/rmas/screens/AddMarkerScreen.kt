@@ -312,7 +312,6 @@ fun AddMarkerScreen(navController: NavController, markerViewModel: MarkerViewMod
                         Text(
                             text = "Dodaj na mapu",
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
