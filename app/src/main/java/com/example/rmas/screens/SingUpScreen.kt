@@ -300,17 +300,6 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                         modifier = Modifier
                             .size(90.dp)
                             .clip(CircleShape)
-                            .clickable {
-                                if (ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.CAMERA
-                                    ) != PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                } else {
-                                    launcher.launch(imageUtils.getIntent())
-                                }
-                            }
                             .border(
                                 width = 1.dp,
                                 color = OutlinedTextFieldDefaults.colors().unfocusedPlaceholderColor,
@@ -324,6 +313,17 @@ fun SingUpScreen(navController: NavController, singUpViewModel: SingUpViewModel 
                             contentDescription = "",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
+                                .clickable {
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.CAMERA
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                    } else {
+                                        launcher.launch(imageUtils.getIntent())
+                                    }
+                                }
                                 .clip(CircleShape)
                                 .size(70.dp)
                         )
