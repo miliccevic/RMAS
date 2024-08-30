@@ -149,6 +149,7 @@ class LocationService : Service() {
             .setContentText("Nalazite se u blizini objekta: ${title}!")
             .setSmallIcon(R.drawable.baseline_notifications_24)
             .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
             .build()
 
         val notificationManager =

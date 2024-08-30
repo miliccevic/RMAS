@@ -91,6 +91,7 @@ import java.util.Date
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Man
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.LaunchedEffect
@@ -166,12 +167,11 @@ fun HomeScreen(
         position = CameraPosition.fromLatLngZoom(deviceLatLng, 15f)
     }
     val uiSettings by remember {
-        mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
+        mutableStateOf(MapUiSettings(zoomControlsEnabled = true, compassEnabled = true))
     }
     val properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.TERRAIN))
     }
-
     var navLabel by rememberSaveable {
         mutableStateOf("Mapa")
     }
@@ -520,7 +520,9 @@ fun HomeScreen(
                     )
                 }
             } else null
-        }) { values ->
+        },
+            floatingActionButtonPosition = FabPosition.Start
+        ) { values ->
             Surface(
                 color = Color.White,
                 modifier = Modifier
@@ -537,14 +539,6 @@ fun HomeScreen(
                                 uiSettings = uiSettings,
                                 onMapClick = {}) {
                                 if (userLocation.value != null) {
-                                    cameraPositionState.move(
-                                        CameraUpdateFactory.newLatLng(
-                                            LatLng(
-                                                userLocation.value!!.latitude,
-                                                userLocation.value!!.longitude
-                                            )
-                                        )
-                                    )
                                     MarkerComposable(
                                         title = "Vaša lokacija",
                                         state = MarkerState(
