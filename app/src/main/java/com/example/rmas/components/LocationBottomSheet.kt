@@ -1,6 +1,7 @@
 package com.example.rmas.components
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.example.rmas.data.Like
 import com.example.rmas.data.Location
 import com.example.rmas.data.User
 import com.example.rmas.database.Firebase
@@ -58,7 +58,8 @@ fun LocationBottomSheet(
 ) {
     var user by remember { mutableStateOf(User()) }
     var location by remember { mutableStateOf(Location()) }
-
+    val userId = FirebaseAuth.getInstance().currentUser!!.uid
+    var liked by remember { mutableStateOf(false) }
     Firebase.getLocation(locationId) {
         if (it != null) {
             location = it
@@ -67,12 +68,11 @@ fun LocationBottomSheet(
                     user = us
                 }
             }
+            Firebase.didUserLike(userId, location.id) { bool ->
+                liked = bool
+                Log.d("TAG!",liked.toString())
+            }
         }
-    }
-    val userId = FirebaseAuth.getInstance().currentUser!!.uid
-    var favorites by remember { mutableStateOf(emptyList<Like>()) }
-    Firebase.userLikes(userId) {
-        favorites = it
     }
     ModalBottomSheet(
         onDismissRequest = {
@@ -92,13 +92,9 @@ fun LocationBottomSheet(
                     Text(location.title, style = MaterialTheme.typography.headlineMedium)
                     if (location.userId != userId) {
                         IconToggleButton(
-                            checked = favorites.any {
-                                it.locationId == location.id
-                            },
+                            checked = liked,
                             onCheckedChange = {
-                                if (favorites.any {
-                                        it.locationId == location.id
-                                    }) {
+                                if (liked) {
                                     Firebase.removeLikeFromDb(userId, location.id)
                                 } else {
                                     Firebase.addLikeToDb(userId, location.id)
@@ -112,9 +108,7 @@ fun LocationBottomSheet(
                                         scaleX = 1.3f
                                         scaleY = 1.3f
                                     },
-                                imageVector = if (favorites.any {
-                                        it.locationId == location.id
-                                    }) {
+                                imageVector = if (liked) {
                                     Icons.Filled.Favorite
                                 } else {
                                     Icons.Default.FavoriteBorder

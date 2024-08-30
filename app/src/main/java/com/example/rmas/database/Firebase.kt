@@ -82,15 +82,17 @@ object Firebase {
             }
     }
 
-    fun userLikes(userId: String, listener: (List<Like>) -> Unit) {
+    fun didUserLike(userId: String, locationId: String, listener: (Boolean) -> Unit) {
         val db = Firebase.firestore
-        var likes: MutableList<Like>
         db.collection("likes")
             .whereEqualTo("userId", userId)
+            .whereEqualTo("locationId", locationId)
             .addSnapshotListener { snap, _ ->
                 if (snap != null) {
-                    likes = snap.toObjects(Like::class.java)
-                    listener(likes)
+                    if (snap.isEmpty)
+                        listener(false)
+                    else
+                        listener(true)
                 }
             }
     }
