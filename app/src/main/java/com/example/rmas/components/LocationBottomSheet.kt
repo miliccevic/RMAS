@@ -1,7 +1,6 @@
 package com.example.rmas.components
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -70,7 +69,6 @@ fun LocationBottomSheet(
             }
             Firebase.didUserLike(userId, location.id) { bool ->
                 liked = bool
-                Log.d("TAG!",liked.toString())
             }
         }
     }
